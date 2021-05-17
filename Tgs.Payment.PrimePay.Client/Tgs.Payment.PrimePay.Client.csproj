@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>Tgs.Payment.PrimePay</RootNamespace>
-    <Nullable>enable</Nullable>
-    <Authors>Raypro</Authors>
-    <PackageProjectUrl>https://gitlab.com/rayprosoft/tgs-payment-primepay</PackageProjectUrl>
-    <RepositoryUrl>https://gitlab.com/rayprosoft/tgs-payment-primepay.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageTags>Raypro Payment</PackageTags>
-    <Version>0.0.1-alpha</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<RootNamespace>Tgs.Payment.PrimePay</RootNamespace>
+		<Nullable>enable</Nullable>
+		<Authors>Raypro</Authors>
+		<PackageProjectUrl>https://gitlab.com/rayprosoft/tgs-payment-primepay</PackageProjectUrl>
+		<RepositoryUrl>https://gitlab.com/rayprosoft/tgs-payment-primepay.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>Raypro Payment</PackageTags>
+		<Version>0.0.2-alpha</Version>
+		<IsPackable>true</IsPackable>
+	</PropertyGroup>
 
 </Project>
