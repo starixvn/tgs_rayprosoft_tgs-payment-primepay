@@ -7,10 +7,10 @@ namespace Tgs.Payment.PrimePay
     {
         ValueTask<DepositFormInfo> GetDepositFormByIdAsync(Guid id);
 
-        //ValueTask<WithdrawFormInfo> GetWithdrawFormByIdAsync(Guid id);
+        ValueTask<WithdrawFormInfo> GetWithdrawFormByIdAsync(Guid id);
 
-        //ValueTask SaveDepositReturnAsync(Guid id, LeePayDepositReturn depositReturn);
+        ValueTask SaveDepositReturnAsync(Guid id, PrimePayReturn depositReturn);
 
-        //ValueTask SaveWithdrawReturnAsync(Guid id, LeePayWithdrawReturn withdrawReturn);
+        ValueTask SaveWithdrawReturnAsync(Guid id, PrimePayReturn withdrawReturn);
     }
 }

@@ -56,7 +56,8 @@ namespace Tgs.Payment.PrimePay
             if (apiResponseData.Status == "success")
                 return apiResponseData;
             else
-                throw new ApiException(response.StatusCode, bodyJson);
+                //throw new ApiException(response.StatusCode, bodyJson);
+                return null;
         }
 
         public async ValueTask<BalanceInfo[]?> GetMarchantBalanceInfosAsync(

@@ -1,6 +1,6 @@
 ﻿namespace Tgs.Payment.PrimePay
 {
-    public class WithdrawCompletedCallbackMessage : CallbackMessage
+    public class PrimePayWithdrawCompletedReturn : PrimePayReturn
     {
         public AdjustmentInfo? Adjustment { get; init; }
 

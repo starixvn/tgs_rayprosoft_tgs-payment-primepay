@@ -25,24 +25,29 @@ namespace Tgs.Payment.PrimePay.Controllers
         public async Task<CallbackConfirmViewModel> DepositCallbackAsync(
             [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
             [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo> getDepositFormService,
+            [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
             [FromServices] PrimePayCryptography cryptography,
             [FromBody] CallbackViewModel request)
         {
             var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
 
-            //var depositForm = await getDepositFormService
-            //    .GetAsync(new GetDepositFormQuery(request.TransactionId))
-            //    .ConfigureAwait(false);
+            var depositForm = await getDepositFormService
+                .GetAsync(new GetDepositFormQuery(request.TransactionId))
+                .ConfigureAwait(false);
+
+            var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
+                depositForm.ApplyInfo!.Settings.Key,
+                depositForm.ApplyInfo!.Settings.IV,
+                request.Message)!;
+
+            await saveReturnService
+                .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
+                .ConfigureAwait(false);
 
             //var callbackMessage = cryptography.Decrypt<CallbackMessage>(
-            //    depositForm.ApplyInfo!.Settings.Key,
-            //    depositForm.ApplyInfo!.Settings.IV,
+            //    "018a716fafde1b7f",
+            //    "2c956cdbfabc792a",
             //    request.Message)!;
-
-            var callbackMessage = cryptography.Decrypt<CallbackMessage>(
-                "018a716fafde1b7f",
-                "2c956cdbfabc792a",
-                request.Message)!;
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
             return new CallbackConfirmViewModel

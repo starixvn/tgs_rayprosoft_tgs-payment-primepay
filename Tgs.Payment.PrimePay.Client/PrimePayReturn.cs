@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Transactions;
 
 namespace Tgs.Payment.PrimePay
 {
-    public abstract class CallbackMessage
+    public abstract class PrimePayReturn
     {
         public decimal Amount { get; init; }
 

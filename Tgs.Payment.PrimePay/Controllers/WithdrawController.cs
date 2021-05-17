@@ -24,25 +24,30 @@ namespace Tgs.Payment.PrimePay.Controllers
         [HttpPost("callback")]
         public async Task<CallbackConfirmViewModel> WithdrawCallbackAsync(
             [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
-            [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo> getDepositFormService,
+            [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo> getDepositFormService,
+            [FromServices] ICommandService<SaveWithdrawReturnCommand> saveReturnService,
             [FromServices] PrimePayCryptography cryptography,
             [FromBody] CallbackViewModel request)
         {
             var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
 
-            //var depositForm = await getDepositFormService
-            //    .GetAsync(new GetDepositFormQuery(request.TransactionId))
-            //    .ConfigureAwait(false);
+            var withdrawForm = await getDepositFormService
+                .GetAsync(new GetWithdrawFormQuery(request.TransactionId))
+                .ConfigureAwait(false);
 
-            //var callbackMessage = cryptography.Decrypt<CallbackMessage>(
-            //    depositForm.ApplyInfo!.Settings.Key,
-            //    depositForm.ApplyInfo!.Settings.IV,
-            //    request.Message)!;
-
-            var callbackMessage = cryptography.Decrypt<CallbackMessage>(
-                "018a716fafde1b7f",
-                "2c956cdbfabc792a",
+            var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
+                withdrawForm.ApplyInfo!.Settings.Key,
+                withdrawForm.ApplyInfo!.Settings.IV,
                 request.Message)!;
+
+            await saveReturnService
+                .ExecuteAsync(new SaveWithdrawReturnCommand(withdrawForm.Id, callbackMessage))
+                .ConfigureAwait(false);
+
+            //var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
+            //    "018a716fafde1b7f",
+            //    "2c956cdbfabc792a",
+            //    request.Message)!;
 
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 

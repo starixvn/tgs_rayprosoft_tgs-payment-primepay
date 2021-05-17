@@ -1,6 +1,6 @@
 ﻿namespace Tgs.Payment.PrimePay
 {
-    public class RefundedDepositCallbackMessage : CallbackMessage
+    public class PrimePayRefundedDepositReturn : PrimePayReturn
     {
         public string RefundedReason { get; init; } = default!;
     }

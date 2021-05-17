@@ -2,7 +2,7 @@
 
 namespace Tgs.Payment.PrimePay
 {
-    public class TransferringDepositCallbackMessage : CallbackMessage
+    public class PrimePayTransferringDepositReturn : PrimePayReturn
     {
         [JsonPropertyName("fromBankAcctName")]
         public string FromBankAccountName { get; init; } = default!;

@@ -29,5 +29,45 @@ namespace Tgs.Payment.PrimePay.Repositories
                 _serializer.Deserialize<PrimePayDepositApplyInfo>(data.ApplyInfo),
                 data.PaymentReturn);
         }
+
+        public async ValueTask<WithdrawFormInfo> GetWithdrawFormByIdAsync(Guid id)
+        {
+            var data = await _dbContext.WithdrawForms.FindAsync(id).ConfigureAwait(false);
+
+            return new WithdrawFormInfo(
+                data.Id,
+                data.PlayerCode,
+                data.BrandId,
+                data.BrandPaymentId,
+                data.Amount,
+                data.Status,
+                data.BankInfoId,
+                data.BankInfo,
+                _serializer.Deserialize<PrimePayWithdrawApplyInfo>(data.ApplyInfo),
+                data.PaymentReturn);
+        }
+
+        public async ValueTask SaveDepositReturnAsync(Guid id, PrimePayReturn depositReturn)
+        {
+            var form = await _dbContext.DepositForms
+                .FindAsync(id)
+                .ConfigureAwait(false);
+
+            form.Status = 1000;
+            form.PaymentReturn = _serializer.Serialize(depositReturn);
+
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
+        }
+
+        public async ValueTask SaveWithdrawReturnAsync(Guid id, PrimePayReturn withdrawReturn)
+        {
+            var form = await _dbContext.WithdrawForms
+                .FindAsync(id)
+                .ConfigureAwait(false);
+
+            form.PaymentReturn = _serializer.Serialize(withdrawReturn);
+
+            await _dbContext.SaveChangesAsync().ConfigureAwait(false);
+        }
     }
 }

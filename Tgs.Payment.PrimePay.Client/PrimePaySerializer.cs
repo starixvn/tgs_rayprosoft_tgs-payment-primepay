@@ -11,7 +11,8 @@ namespace Tgs.Payment.PrimePay
             WriteIndented = false,
             Converters = {
                 new PrimePayDepositResponseJsonConverter(),
-                new PrimePayWithdrawResponseJsonConverter()
+                new PrimePayWithdrawResponseJsonConverter(),
+                new PrimePayReturnJsonConverter()
             }
         };
 

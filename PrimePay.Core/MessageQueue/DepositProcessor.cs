@@ -33,7 +33,7 @@ namespace Tgs.Payment.PrimePay.MessageQueue
                 Currency = settings.Currency,
                 MerchantId = settings.MerchantId,
                 TransactionId = GuidHelper.GuidToString(settings.TransactionId),
-                Response = settings.ResponseUrl,
+                Response = "https://google.com", // settings.ResponseUrl,
                 PaymentMethod = "offline"
             };
 

@@ -26,7 +26,5 @@ namespace Tgs.Payment.PrimePay
 
             return new Guid(bytes);
         }
-
-        internal static string GuidToString(object transactionId) => throw new NotImplementedException();
     }
 }

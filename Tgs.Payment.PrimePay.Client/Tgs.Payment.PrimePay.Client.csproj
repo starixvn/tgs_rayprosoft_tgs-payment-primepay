@@ -9,7 +9,7 @@
 		<RepositoryUrl>https://gitlab.com/rayprosoft/tgs-payment-primepay.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<PackageTags>Raypro Payment</PackageTags>
-		<Version>0.0.2-alpha</Version>
+		<Version>0.0.3-alpha</Version>
 		<IsPackable>true</IsPackable>
 	</PropertyGroup>
 

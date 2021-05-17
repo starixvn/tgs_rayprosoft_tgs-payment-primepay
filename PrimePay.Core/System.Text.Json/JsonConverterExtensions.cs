@@ -12,7 +12,7 @@ namespace System.Text.Json
             converters.Add(new NullableDateTimeOffsetJsonConverter());
             converters.Add(new DateTimeOffsetJsonConverter());
             converters.Add(new TransactionInfoJsonConverter());
-            converters.Add(new CallbackMessageJsonConverter());
+            converters.Add(new PrimePayReturnJsonConverter());
             converters.Add(new PrimePayDepositResponseJsonConverter());
             converters.Add(new PrimePayWithdrawResponseJsonConverter());
         }
