@@ -21,7 +21,7 @@ connectionStrings:
 nats: nats://localhost:4222
 
 paymentApiUrl: https://api.leepay-wallet.com
-callbackBaseUrl: https://payment.yggdrasill.dev
+callbackBaseUrl: https://dev.payment.tgsdev.gq/primepay
 
 simulation: true
 

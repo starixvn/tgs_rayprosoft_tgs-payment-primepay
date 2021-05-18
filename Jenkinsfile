@@ -48,7 +48,7 @@ pipeline {
 			steps {
 				configFileProvider([
 					configFile(
-						fileId: 'PrimePay.dev.json', 
+						fileId: 'primepay.dev.json', 
 						variable: 'primepaydev')]) {
 					script {
 						def json = readJSON file: "$primepaydev";
@@ -56,6 +56,7 @@ pipeline {
 						env.TGS = json.tgs;
 						env.PaymentApiUrl = json.paymentApiUrl;
 						env.NatsUri = json.nats;
+						env.CallbackUrl = json.callbackBaseUrl;
 
 						withKubeConfig([credentialsId: 'k8s-kube-config', serverUrl: 'https://192.168.50.105:6443']) {
 							sh '''
@@ -63,14 +64,16 @@ pipeline {
 									--set image.tag=v${BUILD_NUMBER} \
 									--set namespace=dev \
 									--set "connectionStrings.tgs=${TGS}" \
-									--set nats=${NatsUri}
+									--set nats=${NatsUri} \
+									--set callbackBaseUrl=${CallbackUrl}
 							'''
 							sh '''
 								helm template k8s/primepay \
 									--set image.tag=v${BUILD_NUMBER} \
 									--set namespace=dev \
 									--set "connectionStrings.tgs=${TGS}" \
-									--set nats=${NatsUri} | kubectl -n dev apply -f -
+									--set nats=${NatsUri} \
+									--set callbackBaseUrl=${CallbackUrl} | kubectl -n dev apply -f -
 							'''
 						}
 					}
