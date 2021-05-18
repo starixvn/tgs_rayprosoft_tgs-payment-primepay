@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-{{ include "primepay.fullname" . }}
+  namespace: {{ .Values.namespace }}
+data:
+  appsettings.json: |
+    {
+      "ConnectionStrings": {
+        "Tgs": "{{ .Values.connectionStrings.tgs }}"
+      },
+      "LeePay": {
+        "PaymentApiUrl": "{{ .Values.paymentApiUrl  }}",
+        "NatsUrl": "{{ .Values.nats }}",
+        "CallbackBaseUrl": "{{ .Values.callbackBaseUrl }}"
+      }
+    }
