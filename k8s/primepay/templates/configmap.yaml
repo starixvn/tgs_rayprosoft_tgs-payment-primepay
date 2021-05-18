@@ -9,7 +9,7 @@ data:
       "ConnectionStrings": {
         "Tgs": "{{ .Values.connectionStrings.tgs }}"
       },
-      "LeePay": {
+      "PrimePay": {
         "PaymentApiUrl": "{{ .Values.paymentApiUrl  }}",
         "NatsUrl": "{{ .Values.nats }}",
         "CallbackBaseUrl": "{{ .Values.callbackBaseUrl }}"

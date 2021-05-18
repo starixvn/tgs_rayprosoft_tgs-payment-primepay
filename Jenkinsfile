@@ -64,6 +64,7 @@ pipeline {
 									--set image.tag=v${BUILD_NUMBER} \
 									--set namespace=dev \
 									--set "connectionStrings.tgs=${TGS}" \
+									--set paymentApiUrl=${PaymentApiUrl} \
 									--set nats=${NatsUri} \
 									--set callbackBaseUrl=${CallbackUrl}
 							'''
@@ -72,6 +73,7 @@ pipeline {
 									--set image.tag=v${BUILD_NUMBER} \
 									--set namespace=dev \
 									--set "connectionStrings.tgs=${TGS}" \
+									--set paymentApiUrl=${PaymentApiUrl} \
 									--set nats=${NatsUri} \
 									--set callbackBaseUrl=${CallbackUrl} | kubectl -n dev apply -f -
 							'''
