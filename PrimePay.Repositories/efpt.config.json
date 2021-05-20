@@ -15,11 +15,11 @@
    "SelectedToBeGenerated": 0,
    "Tables": [
       {
-         "Name": "dbo.deposit_forms",
+         "Name": "dbo.withdraw_forms",
          "ObjectType": 0
       },
       {
-         "Name": "dbo.withdraw_forms",
+         "Name": "dbo.deposit_forms",
          "ObjectType": 0
       }
    ],
@@ -28,13 +28,13 @@
    "UseDatabaseNames": false,
    "UseDbContextSplitting": true,
    "UseFluentApiOnly": true,
-   "UseHandleBars": true,
+   "UseHandleBars": false,
    "UseInflector": true,
    "UseLegacyPluralizer": false,
    "UseNoConstructor": false,
    "UseNoNavigations": false,
    "UseNoObjectFilter": false,
    "UseNodaTime": false,
-   "UseNullableReferences": false,
+   "UseNullableReferences": true,
    "UseSpatial": false
 }

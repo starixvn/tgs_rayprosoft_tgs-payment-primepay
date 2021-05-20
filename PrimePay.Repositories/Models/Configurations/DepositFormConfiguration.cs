@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using Tgs.Payment.PrimePay.Repositories.Entities;
 
+#nullable disable
 
 namespace Tgs.Payment.PrimePay.Repositories.Entities.Configurations
 {
@@ -14,15 +15,19 @@ namespace Tgs.Payment.PrimePay.Repositories.Entities.Configurations
         {
             entity.ToTable("deposit_forms", "dbo");
 
-            entity.HasIndex(e => e.BrandId);
+            entity.HasIndex(e => e.BrandId, "ix_deposit_forms_brandId");
 
-            entity.HasIndex(e => e.BrandPaymentId);
+            entity.HasIndex(e => e.BrandPaymentId, "ix_deposit_forms_brand_payment_id");
 
-            entity.HasIndex(e => e.PlayerCode);
+            entity.HasIndex(e => e.PlayerCode, "ix_deposit_forms_playerCode");
 
             entity.Property(e => e.Id)
                 .ValueGeneratedNever()
                 .HasColumnName("id");
+
+            entity.Property(e => e.ActualAmount)
+                .HasPrecision(18, 6)
+                .HasColumnName("actual_amount");
 
             entity.Property(e => e.Amount)
                 .HasPrecision(18, 6)
@@ -49,6 +54,8 @@ namespace Tgs.Payment.PrimePay.Repositories.Entities.Configurations
                 .IsRequired()
                 .HasMaxLength(16)
                 .HasColumnName("player_code");
+
+            entity.Property(e => e.PromotionId).HasColumnName("promotion_id");
 
             entity.Property(e => e.Remark).HasColumnName("remark");
 
