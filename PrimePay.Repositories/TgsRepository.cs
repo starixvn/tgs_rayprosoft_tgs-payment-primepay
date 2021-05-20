@@ -26,7 +26,7 @@ namespace Tgs.Payment.PrimePay.Repositories
                 data.BrandPaymentId,
                 data.Amount,
                 data.Status,
-                _serializer.Deserialize<PrimePayDepositApplyInfo>(data.ApplyInfo),
+                _serializer.Deserialize<PrimePayDepositApplyInfo>(data.ApplyInfo!),
                 data.PaymentReturn);
         }
 
@@ -43,7 +43,7 @@ namespace Tgs.Payment.PrimePay.Repositories
                 data.Status,
                 data.BankInfoId,
                 data.BankInfo,
-                _serializer.Deserialize<PrimePayWithdrawApplyInfo>(data.ApplyInfo),
+                _serializer.Deserialize<PrimePayWithdrawApplyInfo>(data.ApplyInfo!),
                 data.PaymentReturn);
         }
 
