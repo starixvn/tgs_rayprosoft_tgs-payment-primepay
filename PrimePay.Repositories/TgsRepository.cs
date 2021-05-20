@@ -54,6 +54,7 @@ namespace Tgs.Payment.PrimePay.Repositories
                 .ConfigureAwait(false);
 
             form.Status = 1000;
+            form.ActualAmount = depositReturn.Amount;
             form.PaymentReturn = _serializer.Serialize(depositReturn);
 
             await _dbContext.SaveChangesAsync().ConfigureAwait(false);
