@@ -167,11 +167,11 @@ namespace Tgs.Payment.PrimePay
                 .PostAsync("/api/merchant/transact", requestContent)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation($"Deposit StatusCode: {response.StatusCode}");
+            _logger.LogInformation($"Withdraw StatusCode: {response.StatusCode}");
 
             var bodyJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-            _logger.LogInformation($"Deposit Body: {bodyJson}");
+            _logger.LogInformation($"Withdraw Body: {bodyJson}");
 
             response.EnsureSuccessStatusCode();
 
