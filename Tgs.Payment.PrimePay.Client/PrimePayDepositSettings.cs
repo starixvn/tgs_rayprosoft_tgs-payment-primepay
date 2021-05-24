@@ -8,5 +8,6 @@ namespace Tgs.Payment.PrimePay
         string IV,
         string Currency,
         Guid TransactionId,
-        string ResponseUrl);
+        string ResponseUrl,
+        string? PaymentMethod = null);
 }

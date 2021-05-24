@@ -35,20 +35,20 @@ namespace PrimePayTest
                 .DepositAsync("tgs.payment.primepay.deposit", 1000M, _primePaySerializer.Serialize(settings))
                 .ConfigureAwait(false);
 
-            //var withdrawSettings = new PrimePayWithdrawSettings(
-            //    "c3a77b3187759940",
-            //    "018a716fafde1b7f",
-            //    "2c956cdbfabc792a",
-            //    Guid.NewGuid(),
-            //    "RMB",
-            //    "111111111111",
-            //    "Tester",
-            //    "bbbb",
-            //    "TestBank");
+            var withdrawSettings = new PrimePayWithdrawSettings(
+                "c3a77b3187759940",
+                "018a716fafde1b7f",
+                "2c956cdbfabc792a",
+                Guid.NewGuid(),
+                "RMB",
+                "111111111111",
+                "Tester",
+                "bbbb",
+                "TestBank");
 
-            //var withdrawReturn = await _paymentClient
-            //    .WithdrawAsync("tgs.payment.primepay.withdraw", 500M, _primePaySerializer.Serialize(withdrawSettings))
-            //    .ConfigureAwait(false);
+            var withdrawReturn = await _paymentClient
+                .WithdrawAsync("tgs.payment.primepay.withdraw", 500M, _primePaySerializer.Serialize(withdrawSettings))
+                .ConfigureAwait(false);
         }
     }
 }

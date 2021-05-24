@@ -34,7 +34,7 @@ namespace Tgs.Payment.PrimePay.MessageQueue
                 MerchantId = settings.MerchantId,
                 TransactionId = GuidHelper.GuidToString(settings.TransactionId),
                 Response = "https://google.com", // settings.ResponseUrl,
-                PaymentMethod = "offline"
+                PaymentMethod = settings.PaymentMethod ?? "offline"
             };
 
             var depositResponse = await _primePayClient
