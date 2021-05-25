@@ -10,10 +10,9 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddPrimePayRepositories(
             this IServiceCollection services,
-            Action<IServiceProvider, DbContextOptionsBuilder> configure,
-            int poolSize = 128)
+            Action<IServiceProvider, DbContextOptionsBuilder> configure)
             => services
-                .AddDbContextPool<TgsContext>(configure, poolSize)
+                .AddDbContext<TgsContext>(configure)
                 .AddTransient<ITgsRepository, TgsRepository>();
     }
 }
