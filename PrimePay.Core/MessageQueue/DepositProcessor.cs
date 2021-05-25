@@ -8,7 +8,7 @@ using Tgs.Payment.Protos;
 
 namespace Tgs.Payment.PrimePay.MessageQueue
 {
-    internal class DepositProcessor : IMessageProcessor
+    internal class DepositProcessor : IMessageProcessor, IMessageExceptionProcessor
     {
         private readonly PrimePayOptions _options;
         private readonly PrimePayClient _primePayClient;
@@ -69,6 +69,27 @@ namespace Tgs.Payment.PrimePay.MessageQueue
 
                 return msg.ToByteArray();
             }
+        }
+
+        public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+        {
+            var request = DepositRequest.Parser.ParseFrom(data);
+            var settings = _primePaySerializer.Deserialize<PrimePayDepositSettings>(request.ApplyInfo)!;
+
+            var response = new PrimePayDepositFailResponse
+            {
+                Status = "fail",
+                Errors = exception.ToString()
+            };
+
+            var applyInfo = new PrimePayDepositApplyInfo(settings, response);
+
+            var msg = new DepositResponse
+            {
+                Result = _primePaySerializer.Serialize(applyInfo)
+            };
+
+            return ValueTask.FromResult(msg.ToByteArray());
         }
     }
 }
