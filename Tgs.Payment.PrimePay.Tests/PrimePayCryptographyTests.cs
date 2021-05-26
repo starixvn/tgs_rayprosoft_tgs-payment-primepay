@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
@@ -31,10 +27,12 @@ namespace Tgs.Payment.PrimePay.Tests
                 }
             };
 
-            var sut = new PrimePayCryptography(new OptionsWrapper<PrimePayOptions>(new PrimePayOptions
-            {
-                SystemSerializerOptions = options
-            }));
+            var sut = new PrimePayCryptography(
+                new OptionsWrapper<PrimePayOptions>(new PrimePayOptions
+                {
+                    SystemSerializerOptions = options
+                }),
+                NullLogger<PrimePayCryptography>.Instance);
 
             var data = "TestData";
 
