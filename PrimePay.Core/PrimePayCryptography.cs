@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Tgs.Payment.PrimePay
@@ -10,6 +11,7 @@ namespace Tgs.Payment.PrimePay
     {
         private readonly static Aes _Aes;
         private readonly JsonSerializerOptions? _jsonSerializerOptions;
+        private readonly ILogger<PrimePayCryptography> _logger;
 
         static PrimePayCryptography()
         {
@@ -17,9 +19,10 @@ namespace Tgs.Payment.PrimePay
             _Aes.KeySize = 128;
         }
 
-        public PrimePayCryptography(IOptions<PrimePayOptions> optionsAccessor)
+        public PrimePayCryptography(IOptions<PrimePayOptions> optionsAccessor, ILogger<PrimePayCryptography> logger)
         {
             _jsonSerializerOptions = optionsAccessor.Value.SystemSerializerOptions;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public T? Decrypt<T>(string key, string iv, string encryptedData)
@@ -38,6 +41,8 @@ namespace Tgs.Payment.PrimePay
         public string Encrypt<T>(string key, string iv, T data)
         {
             var json = SerializeObject(data);
+            _logger.LogInformation($"Encrypt data: {json}");
+
             var jsonByteArray = Encoding.UTF8.GetBytes(json);
 
             using var encryptor = _Aes.CreateEncryptor(Encoding.ASCII.GetBytes(key), Encoding.ASCII.GetBytes(iv));
