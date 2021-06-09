@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Tgs.Payment;
+using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay;
 
 namespace PrimePayTest

@@ -26,6 +26,7 @@ namespace Tgs.Payment.PrimePay.Controllers
             [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
             [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo> getDepositFormService,
             [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
+            [FromServices] ICommandService<ApproveDepositFormCommand> approveService,
             [FromServices] PrimePayCryptography cryptography,
             [FromBody] CallbackViewModel request)
         {
@@ -44,11 +45,11 @@ namespace Tgs.Payment.PrimePay.Controllers
                 .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
                 .ConfigureAwait(false);
 
-            //var callbackMessage = cryptography.Decrypt<CallbackMessage>(
-            //    "018a716fafde1b7f",
-            //    "2c956cdbfabc792a",
-            //    request.Message)!;
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
+
+            var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
+
+            await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
 
             return new CallbackConfirmViewModel
             {
