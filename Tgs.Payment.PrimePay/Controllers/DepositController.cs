@@ -36,20 +36,23 @@ namespace Tgs.Payment.PrimePay.Controllers
                 .GetAsync(new GetDepositFormQuery(request.TransactionId))
                 .ConfigureAwait(false);
 
-            var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
-                depositForm.ApplyInfo!.Settings.Key,
-                depositForm.ApplyInfo!.Settings.IV,
-                request.Message)!;
+            if (depositForm.Status < 1000)
+            {
+                var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
+                    depositForm.ApplyInfo!.Settings.Key,
+                    depositForm.ApplyInfo!.Settings.IV,
+                    request.Message)!;
 
-            await saveReturnService
-                .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
-                .ConfigureAwait(false);
+                await saveReturnService
+                    .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
+                    .ConfigureAwait(false);
 
-            _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
+                _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
-            var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
+                var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
 
-            await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
+                await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
+            }
 
             return new CallbackConfirmViewModel
             {
