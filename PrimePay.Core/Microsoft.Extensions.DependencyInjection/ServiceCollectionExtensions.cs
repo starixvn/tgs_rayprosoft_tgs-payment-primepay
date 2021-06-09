@@ -35,6 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         })
                         .AddProcessor<DepositProcessor>("tgs.payment.primepay.deposit", "tgs.payment.primepay.deposit")
                         .AddProcessor<WithdrawProcessor>("tgs.payment.primepay.withdraw", "tgs.payment.primepay.withdraw");
-                });
+                })
+                .AddPaymentClient();
     }
 }
