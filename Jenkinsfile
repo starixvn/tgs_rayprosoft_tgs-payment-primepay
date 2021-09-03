@@ -1,13 +1,53 @@
+def message = "";
+
 pipeline {
 	agent any
 	
 	environment {
-		gitlab_user_pwd=credentials('gitlab-user-pwd')
 		BuildConfiguration="Debug"
 		ImageName="registry.gitlab.com/rayprosoft/turnkey-gaming-system/primepay"
+		ImageTagUrl = "https://gitlab.com/api/v4/projects/20478010/registry/repositories/2158078/tags"
 	}
 
 	stages {
+		stage('Prepare') {
+            steps {
+                sh "echo 'Branch: $GIT_BRANCH'";
+                script {
+                    switch(env.GIT_BRANCH)
+                    {
+                        case ['origin/main','main']:
+                            env.kube_ns = "prod";
+                            env.k8s_config = 'stag-k8s-config';
+                            break;
+                        case ['origin/release','release']:
+                            env.kube_ns = "staging";
+                            env.k8s_config = 'stag-k8s-config';
+                            break;
+                        default:
+                            env.kube_ns = "dev";
+                            env.k8s_config = 'k8s-kube-config' 
+                            break;
+                    }
+                }
+                configFileProvider([
+                    configFile(fileId: 'tgs.' + env.kube_ns , variable: 'tgsconfig')]) {
+                        script {
+                            def envItems = readProperties file: "$tgsconfig";
+                            envItems.each { key, value -> env."tgs_${key}" = value;
+                        }
+                        env.TAG = sh(script: "echo `date +%Y.%m.%d.%H%M`", returnStdout: true).trim() + '-' + env.kube_ns;
+                        message += "\nBranch: ${env.GIT_BRANCH}" 
+                        message += "\nTag: ${env.TAG}"
+                        message += "\nEnv: ${env.kube_ns}"
+                        env.commit_url = "${env.GIT_URL}".replace(".git","/-/commit/") + "${env.GIT_COMMIT}"
+                        message += "\n Commit: ${env.commit_url}"
+                    }
+                }
+                sh "echo tag: $TAG"
+            }
+        }
+
 		stage('Build') {
 			steps {
 				sh 'dotnet build -c $BuildConfiguration'
@@ -29,64 +69,104 @@ pipeline {
 
 		stage('Build Docker Image') {
 			steps {
-				sh 'dotnet build "Tgs.Payment.PrimePay/Tgs.Payment.PrimePay.csproj" -c $BuildConfiguration -t:ContainerBuild -p:DockerfileTag="$ImageName:v${BUILD_NUMBER}" --no-restore '
+				sh 'dotnet build "Tgs.Payment.PrimePay/Tgs.Payment.PrimePay.csproj" -c $BuildConfiguration -t:ContainerBuild -p:DockerfileTag="$ImageName:${TAG}" --no-restore '
 			}
 		}
 
 		stage('Push Docker Image') {
 			steps {
-				sh 'sudo docker push $ImageName:v${BUILD_NUMBER}'
+				sh 'sudo docker push $ImageName:${TAG}'
 			}
 		}
 
-		stage('Deploy to dev') {
-			input {
-				message 'Ready to go?'
-				ok 'yes'
-			}
+		stage('Deploy') {
+            when {
+                expression {
+                    return env.kube_ns == 'prod';
+                }
+            }
 
+            steps {
+                script {
+                    input message: 'Ready to go?', ok: 'yes';
+                }
+                
+                sh "echo start deploy"
+            }
+        }
+
+		stage('Deploy to k8s') {
 			steps {
-				configFileProvider([
-					configFile(
-						fileId: 'primepay.dev.json', 
-						variable: 'primepaydev')]) {
-					script {
-						def json = readJSON file: "$primepaydev";
-
-						env.TGS = json.tgs;
-						env.PaymentApiUrl = json.paymentApiUrl;
-						env.NatsUri = json.nats;
-						env.CallbackUrl = json.callbackBaseUrl;
-
-						withKubeConfig([credentialsId: 'k8s-kube-config', serverUrl: 'https://192.168.50.105:6443']) {
-							sh '''
-								helm template k8s/primepay \
-									--set image.tag=v${BUILD_NUMBER} \
-									--set namespace=dev \
-									--set "connectionStrings.tgs=${TGS}" \
-									--set paymentApiUrl=${PaymentApiUrl} \
-									--set nats=${NatsUri} \
-									--set callbackBaseUrl=${CallbackUrl}
-							'''
-							sh '''
-								helm template k8s/primepay \
-									--set image.tag=v${BUILD_NUMBER} \
-									--set namespace=dev \
-									--set "connectionStrings.tgs=${TGS}" \
-									--set paymentApiUrl=${PaymentApiUrl} \
-									--set nats=${NatsUri} \
-									--set callbackBaseUrl=${CallbackUrl} | kubectl -n dev apply -f -
-							'''
-						}
-					}
+				withKubeConfig([credentialsId: env.k8s_config]) {
+					sh '''
+						helm template deployment/k8s/primepay \
+							--set image.tag=${TAG} \
+							--set namespace=${kube_ns} \
+							--set connectionStrings.tgs="$tgs_tgs" \
+							--set paymentApiUrl="$tgs_paymentApiUrl_leepay" \
+							--set nats="$tgs_nats" \
+							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_leepay"
+					'''
+					sh '''
+						helm template deployment/k8s/primepay \
+							--set image.tag=${TAG} \
+							--set namespace=${kube_ns} \
+							--set connectionStrings.tgs="$tgs_tgs" \
+							--set paymentApiUrl="$tgs_paymentApiUrl_leepay" \
+							--set nats="$tgs_nats" \
+							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_leepay" \
+						| kubectl -n ${kube_ns} apply -f -
+					'''
 				}
 			}
 		}
+
+		stage('Add Tag on Prod') {
+            when {
+                expression {
+                    return env.kube_ns == 'prod';
+                }
+            }			
+            steps {	
+				sshagent(['ssh-jenkins']) {
+                    sh "git tag -a ${TAG} -m ${TAG}"
+                    sh "git push ${GIT_URL} ${TAG} HEAD:${GIT_BRANCH}"
+                }
+            }
+        }
+
+        stage('Remove Image Tags') {					
+            steps {	
+                withCredentials([string(credentialsId: "GitLabToken", variable: "GitLabToken")]) {					
+                    sh "curl --request DELETE --data \'name_regex_delete=.*\' --data \'keep_n=10\' --header \'PRIVATE-TOKEN: ${GitLabToken}\' ${ImageTagUrl}"
+                }
+            }
+        }
 	}
 
 	post {
+		success {
+             sendTelegram("Pipeline: ${currentBuild.fullDisplayName} OK! ${message} \n${currentBuild.getBuildCauses()[0].shortDescription}\n")
+        }
+        failure {
+            sendTelegram("<b>Failed Pipeline:</b> ${currentBuild.fullDisplayName} Something is wrong with ${env.BUILD_URL}/console\n${currentBuild.getBuildCauses()[0].shortDescription}\n")
+        }
 		always {
 			step([$class: 'MSTestPublisher', testResultsFile:"**/*.trx", failOnError: false, keepLongStdio: true])
 		}
 	}
+}
+
+def sendTelegram(message) {
+    def encodedMessage = URLEncoder.encode(message, "UTF-8")
+
+    withCredentials([string(credentialsId: "telegramToken", variable: "TOKEN"), string(credentialsId: "telegramChatId", variable: "CHAT_ID")]) {
+
+        response = httpRequest (consoleLogResponseBody: true,
+                contentType: 'APPLICATION_JSON',
+                httpMode: 'GET',
+                url: "https://api.telegram.org/bot${TOKEN}/sendMessage?text=${encodedMessage}&chat_id=${CHAT_ID}",
+                validResponseCodes: '200')
+        return response
+    }
 }
