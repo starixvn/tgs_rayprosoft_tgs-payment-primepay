@@ -5,7 +5,7 @@ pipeline {
 	
 	environment {
 		BuildConfiguration="Debug"
-		ImageName="registry.gitlab.com/rayprosoft/turnkey-gaming-system/primepay"
+		ImageName="registry.gitlab.com/rayprosoft/turnkey-gaming-system/payment-primepay"
 		ImageTagUrl = "https://gitlab.com/api/v4/projects/20478010/registry/repositories/2158078/tags"
 	}
 
@@ -103,18 +103,18 @@ pipeline {
 							--set image.tag=${TAG} \
 							--set namespace=${kube_ns} \
 							--set connectionStrings.tgs="$tgs_tgs" \
-							--set paymentApiUrl="$tgs_paymentApiUrl_leepay" \
+							--set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
 							--set nats="$tgs_nats" \
-							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_leepay"
+							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay"
 					'''
 					sh '''
 						helm template deployment/k8s/primepay \
 							--set image.tag=${TAG} \
 							--set namespace=${kube_ns} \
 							--set connectionStrings.tgs="$tgs_tgs" \
-							--set paymentApiUrl="$tgs_paymentApiUrl_leepay" \
+							--set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
 							--set nats="$tgs_nats" \
-							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_leepay" \
+							--set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay" \
 						| kubectl -n ${kube_ns} apply -f -
 					'''
 				}
