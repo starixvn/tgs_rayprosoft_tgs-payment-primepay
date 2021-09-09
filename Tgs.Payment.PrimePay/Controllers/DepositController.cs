@@ -49,9 +49,12 @@ namespace Tgs.Payment.PrimePay.Controllers
 
                 _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
-                var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
+                if (callbackMessage.Status == TransactionStatus.Completed)
+                {
+                    var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
 
-                await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
+                    await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
+                }
             }
 
             return new CallbackConfirmViewModel
