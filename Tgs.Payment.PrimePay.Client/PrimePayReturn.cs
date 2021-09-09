@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Transactions;
 
 namespace Tgs.Payment.PrimePay
 {

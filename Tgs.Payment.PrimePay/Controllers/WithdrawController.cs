@@ -44,11 +44,6 @@ namespace Tgs.Payment.PrimePay.Controllers
                 .ExecuteAsync(new SaveWithdrawReturnCommand(withdrawForm.Id, callbackMessage))
                 .ConfigureAwait(false);
 
-            //var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
-            //    "018a716fafde1b7f",
-            //    "2c956cdbfabc792a",
-            //    request.Message)!;
-
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
             return new CallbackConfirmViewModel
