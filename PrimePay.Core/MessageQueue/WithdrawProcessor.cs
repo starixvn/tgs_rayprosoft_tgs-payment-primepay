@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
 using Tgs.MessageQueue;
+using Tgs.Payment.Clients;
 using Tgs.Payment.Protos;
 
 namespace Tgs.Payment.PrimePay.MessageQueue
@@ -12,12 +13,18 @@ namespace Tgs.Payment.PrimePay.MessageQueue
     {
         private readonly PrimePayOptions _options;
         private readonly PrimePayClient _primePayClient;
+        private readonly IPaymentClient _paymentClient;
         private readonly PrimePaySerializer _primePaySerializer;
 
-        public WithdrawProcessor(PrimePaySerializer primePaySerializer, IOptions<PrimePayOptions> optionsAccessor, PrimePayClient primePayClient)
+        public WithdrawProcessor(
+            PrimePaySerializer primePaySerializer,
+            IOptions<PrimePayOptions> optionsAccessor,
+            PrimePayClient primePayClient,
+            IPaymentClient paymentClient)
         {
             _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
             _primePayClient = primePayClient ?? throw new ArgumentNullException(nameof(primePayClient));
+            _paymentClient = paymentClient ?? throw new ArgumentNullException(nameof(paymentClient));
             _options = optionsAccessor.Value;
         }
 
@@ -46,6 +53,11 @@ namespace Tgs.Payment.PrimePay.MessageQueue
             if (withdrawResponse != null)
             {
                 var applyInfo = new PrimePayWithdrawApplyInfo(settings, withdrawResponse);
+
+                var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
+                await _paymentClient
+                    .EmitWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
+                    .ConfigureAwait(false);
 
                 var msg = new WithdrawResponse
                 {
