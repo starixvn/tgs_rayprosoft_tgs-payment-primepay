@@ -1,4 +1,5 @@
 ﻿using System;
+using Tgs.Payment.Clients;
 
 namespace Tgs.Payment.PrimePay
 {
@@ -8,7 +9,7 @@ namespace Tgs.Payment.PrimePay
         Guid BrandId,
         Guid BrandPaymentId,
         decimal Amount,
-        int Status,
+        PaymentFlowState Status,
         PrimePayDepositApplyInfo? ApplyInfo,
         string? PaymentReturn = null);
 }

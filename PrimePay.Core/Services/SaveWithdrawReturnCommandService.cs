@@ -1,20 +1,29 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Tgs.Payment.Clients;
 using TGS.ServiceUtility;
 
 namespace Tgs.Payment.PrimePay.Services
 {
     internal class SaveWithdrawReturnCommandService : ICommandService<SaveWithdrawReturnCommand>
     {
-        private readonly ITgsRepository _tgsRepository;
+        private readonly IPaymentServiceClient _paymentServiceClient;
+        private readonly PrimePaySerializer _primePaySerializer;
 
-        public SaveWithdrawReturnCommandService(ITgsRepository tgsRepository)
+        public SaveWithdrawReturnCommandService(
+            IPaymentServiceClient paymentServiceClient,
+            PrimePaySerializer primePaySerializer)
         {
-            _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+            _paymentServiceClient = paymentServiceClient ?? throw new ArgumentNullException(nameof(paymentServiceClient));
+            _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
         }
 
         public ValueTask ExecuteAsync(SaveWithdrawReturnCommand command, CancellationToken cancellationToken = default)
-            => _tgsRepository.SaveWithdrawReturnAsync(command.FormId, command.WithdrawReturn);
+            => _paymentServiceClient.SubmitWithdrawFormStatusAsync(
+                command.FormId,
+                command.State,
+                _primePaySerializer.Serialize(command.WithdrawReturn),
+                command.ActualAmount);
     }
 }
