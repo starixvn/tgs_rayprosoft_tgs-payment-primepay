@@ -1,24 +1,47 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Tgs.Payment.Clients;
 using TGS.ServiceUtility;
 
 namespace Tgs.Payment.PrimePay.Services
 {
-    internal class GetWithdrawFormQueryService : IGetService<GetWithdrawFormQuery, WithdrawFormInfo>
+    internal class GetWithdrawFormQueryService : IGetService<GetWithdrawFormQuery, WithdrawFormInfo?>
     {
-        private readonly ITgsRepository _tgsRepository;
+        private readonly IPaymentServiceClient _paymentServiceClient;
+        private readonly PrimePaySerializer _primePaySerializer;
 
-        public GetWithdrawFormQueryService(ITgsRepository tgsRepository)
+        public GetWithdrawFormQueryService(
+            IPaymentServiceClient paymentServiceClient,
+            PrimePaySerializer primePaySerializer)
         {
-            _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+            _paymentServiceClient = paymentServiceClient ?? throw new ArgumentNullException(nameof(paymentServiceClient));
+            _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
         }
 
-        public ValueTask<WithdrawFormInfo> GetAsync(GetWithdrawFormQuery query, CancellationToken cancellationToken = default)
+        public async ValueTask<WithdrawFormInfo?> GetAsync(GetWithdrawFormQuery query, CancellationToken cancellationToken = default)
         {
             var withdrawFormId = GuidHelper.StringToGuid(query.TransactionId);
 
-            return _tgsRepository.GetWithdrawFormByIdAsync(withdrawFormId);
+            var data = await _paymentServiceClient
+                .GetWithdrawFormAsync(withdrawFormId)
+                .ConfigureAwait(false);
+
+            return data == null
+                ? null
+                : new WithdrawFormInfo(
+                    data.Id,
+                    data.UserId,
+                    data.UserType,
+                    data.BrandId,
+                    data.BrandPaymentId,
+                    data.Amount,
+                    data.Status,
+                    data.BankInfoId,
+                    data.BankInfo,
+                    string.IsNullOrWhiteSpace(data.ApplyInfo)
+                        ? null
+                        : _primePaySerializer.Deserialize<PrimePayWithdrawApplyInfo>(data.ApplyInfo));
         }
     }
 }

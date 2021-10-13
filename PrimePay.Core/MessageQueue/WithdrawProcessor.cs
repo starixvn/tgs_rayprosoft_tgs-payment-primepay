@@ -56,7 +56,7 @@ namespace Tgs.Payment.PrimePay.MessageQueue
 
                 var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
                 await _paymentClient
-                    .EmitWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
+                    .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
                     .ConfigureAwait(false);
 
                 var msg = new WithdrawResponse

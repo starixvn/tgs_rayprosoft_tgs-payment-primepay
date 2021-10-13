@@ -8,6 +8,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7A607113-76CB-49AB-8F0D-E57DB7845F25}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimePay.Core", "PrimePay.Core\PrimePay.Core.csproj", "{C623E5BA-0FAA-4CDF-9834-84A0F1AD1C5C}"
@@ -17,8 +18,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tgs.Payment.PrimePay.Client", "Tgs.Payment.PrimePay.Client\Tgs.Payment.PrimePay.Client.csproj", "{998B8835-2849-4A02-A9B5-79D43AB7CBE2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimePayTest", "PrimePayTest\PrimePayTest.csproj", "{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PrimePay.Repositories", "PrimePay.Repositories\PrimePay.Repositories.csproj", "{2A9EC0D4-1DB0-4BAB-936D-4D05B6D78C0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,10 +45,6 @@ Global
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2A9EC0D4-1DB0-4BAB-936D-4D05B6D78C0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2A9EC0D4-1DB0-4BAB-936D-4D05B6D78C0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2A9EC0D4-1DB0-4BAB-936D-4D05B6D78C0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2A9EC0D4-1DB0-4BAB-936D-4D05B6D78C0F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,14 +1,16 @@
 ﻿using System;
+using Tgs.Payment.Clients;
 
 namespace Tgs.Payment.PrimePay
 {
     public record WithdrawFormInfo(
         Guid Id,
-        string PlayerCode,
+        string? UserId,
+        UserType UserType,
         Guid BrandId,
         Guid? BrandPaymentId,
         decimal Amount,
-        int Status,
+        PaymentFlowState Status,
         Guid BankInfoId,
         string? BankInfo,
         PrimePayWithdrawApplyInfo? ApplyInfo,

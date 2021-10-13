@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
 using TGS.ServiceUtility;
@@ -24,7 +25,7 @@ namespace Tgs.Payment.PrimePay.Controllers
         [HttpPost("callback")]
         public async Task<CallbackConfirmViewModel> DepositCallbackAsync(
             [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
-            [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo> getDepositFormService,
+            [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo?> getDepositFormService,
             [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
             [FromServices] ICommandService<ApproveDepositFormCommand> approveService,
             [FromServices] PrimePayCryptography cryptography,
@@ -36,7 +37,7 @@ namespace Tgs.Payment.PrimePay.Controllers
                 .GetAsync(new GetDepositFormQuery(request.TransactionId))
                 .ConfigureAwait(false);
 
-            if (depositForm.Status < 1000)
+            if (depositForm != null && depositForm.Status < PaymentFlowState.WaitApprove)
             {
                 var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
                     depositForm.ApplyInfo!.Settings.Key,
@@ -51,9 +52,14 @@ namespace Tgs.Payment.PrimePay.Controllers
 
                 if (callbackMessage.Status == TransactionStatus.Completed)
                 {
-                    var approveCommand = new ApproveDepositFormCommand(depositForm.Id, depositForm.BrandId);
+                    var approveCommand = new ApproveDepositFormCommand(
+                        depositForm.Id,
+                        depositForm.BrandId,
+                        callbackMessage.Amount);
 
-                    await approveService.ExecuteAsync(approveCommand).ConfigureAwait(false);
+                    await approveService
+                        .ExecuteAsync(approveCommand)
+                        .ConfigureAwait(false);
                 }
             }
 

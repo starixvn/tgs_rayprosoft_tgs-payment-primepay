@@ -24,7 +24,7 @@ namespace Tgs.Payment.PrimePay.Controllers
         [HttpPost("callback")]
         public async Task<CallbackConfirmViewModel> WithdrawCallbackAsync(
             [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
-            [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo> getDepositFormService,
+            [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo?> getDepositFormService,
             [FromServices] ICommandService<SaveWithdrawReturnCommand> saveReturnService,
             [FromServices] PrimePayCryptography cryptography,
             [FromBody] CallbackViewModel request)
@@ -35,13 +35,28 @@ namespace Tgs.Payment.PrimePay.Controllers
                 .GetAsync(new GetWithdrawFormQuery(request.TransactionId))
                 .ConfigureAwait(false);
 
+            if (withdrawForm == null)
+                return new CallbackConfirmViewModel
+                {
+                    Status = "fail",
+                    Message = "Can't find withdraw form."
+                };
+
             var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
                 withdrawForm.ApplyInfo!.Settings.Key,
                 withdrawForm.ApplyInfo!.Settings.IV,
                 request.Message)!;
 
+            var formStatus = withdrawForm.Status;
+            if (withdrawForm.Status == Clients.PaymentFlowState.Approved)
+                formStatus = Clients.PaymentFlowState.Paid;
+
             await saveReturnService
-                .ExecuteAsync(new SaveWithdrawReturnCommand(withdrawForm.Id, callbackMessage))
+                .ExecuteAsync(new SaveWithdrawReturnCommand(
+                    withdrawForm.Id,
+                    formStatus,
+                    callbackMessage,
+                    callbackMessage.Amount))
                 .ConfigureAwait(false);
 
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
