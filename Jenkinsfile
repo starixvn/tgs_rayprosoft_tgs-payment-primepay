@@ -99,12 +99,12 @@ pipeline {
 		stage('Deploy to k8s') {
 			steps {
 				withKubeConfig([credentialsId: env.k8s_config]) {
-                    withCredentials([string(credentialsId: "tgs-${kube_ns}-connectionstring", variable: "tgs_tgs")]) {
+                    withCredentials([string(credentialsId: "tgs-${kube_ns}-connectionstring", variable: "conn")]) {
                         sh '''
                             helm template deployment/k8s/primepay \
                                 --set image.tag=${TAG} \
                                 --set namespace=${kube_ns} \
-                                --set connectionStrings.tgs="$tgs_tgs" \
+                                --set connectionStrings.tgs="${conn}" \
                                 --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
                                 --set nats="$tgs_nats" \
                                 --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay"
@@ -113,7 +113,7 @@ pipeline {
                             helm template deployment/k8s/primepay \
                                 --set image.tag=${TAG} \
                                 --set namespace=${kube_ns} \
-                                --set connectionStrings.tgs="$tgs_tgs" \
+                                --set connectionStrings.tgs="${conn}" \
                                 --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
                                 --set nats="$tgs_nats" \
                                 --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay" \
