@@ -47,17 +47,30 @@ namespace Tgs.Payment.PrimePay.Controllers
                 withdrawForm.ApplyInfo!.Settings.IV,
                 request.Message)!;
 
-            var formStatus = withdrawForm.Status;
-            if (withdrawForm.Status == Clients.PaymentFlowState.Approved)
-                formStatus = Clients.PaymentFlowState.Paid;
+            if (callbackMessage.Status == TransactionStatus.Completed)
+            {
+                var formStatus = withdrawForm.Status;
+                if (withdrawForm.Status == Clients.PaymentFlowState.Approved)
+                    formStatus = Clients.PaymentFlowState.Paid;
 
-            await saveReturnService
-                .ExecuteAsync(new SaveWithdrawReturnCommand(
-                    withdrawForm.Id,
-                    formStatus,
-                    callbackMessage,
-                    callbackMessage.Amount))
-                .ConfigureAwait(false);
+                await saveReturnService
+                    .ExecuteAsync(new SaveWithdrawReturnCommand(
+                        withdrawForm.Id,
+                        formStatus,
+                        callbackMessage,
+                        callbackMessage.Amount))
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await saveReturnService
+                    .ExecuteAsync(new SaveWithdrawReturnCommand(
+                        withdrawForm.Id,
+                        withdrawForm.Status,
+                        callbackMessage,
+                        null))
+                    .ConfigureAwait(false);
+            }
 
             _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
