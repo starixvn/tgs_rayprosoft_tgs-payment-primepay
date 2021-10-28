@@ -104,7 +104,7 @@ pipeline {
                             helm template deployment/k8s/primepay \
                                 --set image.tag=${TAG} \
                                 --set namespace=${kube_ns} \
-                                --set connectionStrings.tgs="${conn}}" \
+                                --set connectionStrings.tgs="${conn}" \
                                 --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
                                 --set nats="$tgs_nats" \
                                 --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay"

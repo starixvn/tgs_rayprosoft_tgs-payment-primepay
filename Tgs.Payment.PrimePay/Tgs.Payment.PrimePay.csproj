@@ -12,17 +12,16 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.13" />
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.9.60">
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.63">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Tgs.Logging" Version="0.0.8" />
+		<PackageReference Include="Tgs.Logging" Version="0.0.11" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\PrimePay.Core\PrimePay.Core.csproj" />
-		<ProjectReference Include="..\PrimePay.Repositories\PrimePay.Repositories.csproj" />
 	</ItemGroup>
 
 </Project>
