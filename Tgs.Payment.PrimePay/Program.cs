@@ -1,30 +1,44 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using OpenTelemetry.Exporter.ProfileViewer.Filters;
+using OpenTelemetry.Trace;
+using Tgs.Payment.PrimePay;
 
-namespace Tgs.Payment.PrimePay
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.ConfigureAppConfiguration(builder =>
 {
-    public class Program
-    {
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration(builder =>
-                {
-                    builder.AddJsonFile("/config/appsettings.json", true);
-                })
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                })
-                .ConfigureLogging((context, builder) =>
-                {
-                    builder.AddTgsLog();
-                });
+    builder.AddJsonFile("/config/appsettings.json", true);
+});
 
-        public static void Main(string[] args)
+builder.Logging.AddTgsLog();
+
+var startup = new Startup();
+
+startup.ConfigureServices(builder.Services);
+
+builder.Services.AddOpenTelemetryTracing(tracing =>
+{
+    tracing
+        .AddSource("Tgs.*")
+        .AddSource("TGS.*")
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddProfileViewExporter(builder =>
         {
-            CreateHostBuilder(args).Build().Run();
-        }
-    }
-}
+            builder
+                .AddFilter(new FileExtensionFilter("html", "ico", "png", "jpg"))
+                .AddFilter(new UrlPathFilter("/swagger"))
+                .AddFilter(new UrlPathFilter("/health"));
+        });
+});
+builder.Services.AddProfileViewer();
+
+var app = builder.Build();
+
+app.MapControllers();
+app.MapProfileViewer();
+app.MapGet("/", async context =>
+{
+    await context.Response.WriteAsync("Hello World!");
+});
+
+await app.RunAsync();

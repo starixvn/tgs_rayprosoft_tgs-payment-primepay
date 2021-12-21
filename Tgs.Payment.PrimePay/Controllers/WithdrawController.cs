@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
-using TGS.ServiceUtility;
+using Tgs.ServiceUtility;
 
 namespace Tgs.Payment.PrimePay.Controllers
 {
@@ -58,7 +58,7 @@ namespace Tgs.Payment.PrimePay.Controllers
                         withdrawForm.Id,
                         formStatus,
                         callbackMessage,
-                        callbackMessage.Amount))
+                        ((PrimePayWithdrawCompletedReturn)callbackMessage).TransactionAmount))
                     .ConfigureAwait(false);
             }
             else
