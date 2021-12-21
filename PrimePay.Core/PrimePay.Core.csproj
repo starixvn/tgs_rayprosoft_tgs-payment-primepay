@@ -1,24 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Tgs.Payment.PrimePay</RootNamespace>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.63">
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.64">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tgs.MessageQueue.Nats" Version="1.1.1" />
-    <PackageReference Include="Tgs.Payment.Client" Version="0.2.0" />
-    <PackageReference Include="Tgs.PaymentService.Client" Version="0.0.29" />
-    <PackageReference Include="TGS.ServiceUtility" Version="0.0.3" />
+    <PackageReference Include="Tgs.MessageQueue.Nats" Version="1.2.0" />
+    <PackageReference Include="Tgs.Payment.Client" Version="0.3.4" />
+    <PackageReference Include="Tgs.PaymentService.Client" Version="0.1.0" />
+    <PackageReference Include="TGS.ServiceUtility" Version="0.1.0" />
   </ItemGroup>
 
   <ItemGroup>

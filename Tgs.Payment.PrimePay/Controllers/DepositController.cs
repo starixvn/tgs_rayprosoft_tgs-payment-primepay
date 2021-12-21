@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
-using TGS.ServiceUtility;
+using Tgs.ServiceUtility;
 
 namespace Tgs.Payment.PrimePay.Controllers
 {
