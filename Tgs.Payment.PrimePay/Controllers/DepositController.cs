@@ -55,7 +55,7 @@ namespace Tgs.Payment.PrimePay.Controllers
                     var approveCommand = new ApproveDepositFormCommand(
                         depositForm.Id,
                         depositForm.BrandId,
-                        callbackMessage.Amount);
+                        ((PrimePayDepositCompletedReturn)callbackMessage).TransactionAmount);
 
                     await approveService
                         .ExecuteAsync(approveCommand)

@@ -58,7 +58,7 @@ namespace Tgs.Payment.PrimePay.Controllers
                         withdrawForm.Id,
                         formStatus,
                         callbackMessage,
-                        callbackMessage.Amount))
+                        ((PrimePayWithdrawCompletedReturn)callbackMessage).TransactionAmount))
                     .ConfigureAwait(false);
             }
             else
