@@ -27,7 +27,7 @@ callbackBaseUrl: https://dev.payment.tgsdev.gq/primepay
 simulation: true
 
 imagePullSecrets:
-  - name: registry-credentials
+  - name: secret-tgs-harbor
 
 podAnnotations: {}
 
