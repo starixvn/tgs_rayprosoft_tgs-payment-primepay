@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics;
 
 namespace Tgs.Payment.PrimePay;
 
@@ -8,21 +8,19 @@ internal static class GuidHelper
     {
         var byteArray = id.ToByteArray();
 
-        var bitInt = new BigInteger(byteArray, isBigEndian: true);
+        var spanId = ActivityTraceId.CreateFromBytes(byteArray);
 
-        return bitInt.ToString($"x{byteArray.Length * 2}");
+        return spanId.ToHexString();
     }
 
     public static Guid StringToGuid(string hex)
     {
         var numberChars = hex.Length;
 
-        var bigInt = BigInteger.Parse($"0{hex}", System.Globalization.NumberStyles.HexNumber);
+        Span<byte> bytes = stackalloc byte[numberChars / 2];
 
-        Span<byte> bytes = stackalloc byte[numberChars / 2 + 1];
+        ActivityTraceId.CreateFromString(hex).CopyTo(bytes);
 
-        bigInt.TryWriteBytes(bytes, out _, isBigEndian: true);
-
-        return new Guid(bytes.Slice(1));
+        return new Guid(bytes);
     }
 }
