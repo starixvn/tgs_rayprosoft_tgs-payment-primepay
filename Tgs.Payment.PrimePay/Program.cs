@@ -17,7 +17,7 @@ startup.ConfigureServices(builder.Services);
 
 builder.Services.AddOpenTelemetryTracing(tracing =>
 {
-    tracing
+    _ = tracing
         .AddSource("Tgs.*")
         .AddSource("TGS.*")
         .AddAspNetCoreInstrumentation()
