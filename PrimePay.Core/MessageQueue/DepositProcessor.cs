@@ -1,85 +1,60 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Protobuf;
+﻿using Google.Protobuf;
 using Microsoft.Extensions.Options;
 using Tgs.MessageQueue;
 using Tgs.Payment.Protos;
 
-namespace Tgs.Payment.PrimePay.MessageQueue
+namespace Tgs.Payment.PrimePay.MessageQueue;
+
+internal class DepositProcessor : IMessageProcessor, IMessageExceptionProcessor
 {
-    internal class DepositProcessor : IMessageProcessor, IMessageExceptionProcessor
+    private readonly PrimePayOptions _options;
+    private readonly PrimePayClient _primePayClient;
+    private readonly PrimePaySerializer _primePaySerializer;
+
+    public DepositProcessor(PrimePaySerializer primePaySerializer, PrimePayClient primePayClient, IOptions<PrimePayOptions> optionsAccessor)
     {
-        private readonly PrimePayOptions _options;
-        private readonly PrimePayClient _primePayClient;
-        private readonly PrimePaySerializer _primePaySerializer;
+        _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
+        _primePayClient = primePayClient ?? throw new ArgumentNullException(nameof(primePayClient));
+        _options = optionsAccessor.Value;
+    }
 
-        public DepositProcessor(PrimePaySerializer primePaySerializer, PrimePayClient primePayClient, IOptions<PrimePayOptions> optionsAccessor)
+    public async ValueTask<byte[]> HandleAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        var request = DepositRequest.Parser.ParseFrom(data);
+        var settings = _primePaySerializer.Deserialize<PrimePayDepositSettings>(request.ApplyInfo)!;
+
+        var order = new DepositOrder
         {
-            _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
-            _primePayClient = primePayClient ?? throw new ArgumentNullException(nameof(primePayClient));
-            _options = optionsAccessor.Value;
-        }
+            Amount = decimal.Parse(request.Amount),
+            Callback = $"{_options.CallbackBaseUrl}/deposit/callback",
+            Currency = settings.Currency,
+            MerchantId = settings.MerchantId,
+            TransactionId = GuidHelper.GuidToString(settings.TransactionId),
+            Response = "https://google.com", // settings.ResponseUrl,
+            PaymentMethod = settings.PaymentMethod ?? "offline"
+        };
 
-        public async ValueTask<byte[]> HandleAsync(byte[] data, CancellationToken cancellationToken = default)
+        var depositResponse = await _primePayClient
+            .DepositAsync(settings.Key, settings.IV, order)
+            .ConfigureAwait(false);
+
+        if (depositResponse != null)
         {
-            var request = DepositRequest.Parser.ParseFrom(data);
-            var settings = _primePaySerializer.Deserialize<PrimePayDepositSettings>(request.ApplyInfo)!;
+            var applyInfo = new PrimePayDepositApplyInfo(settings, depositResponse);
 
-            var order = new DepositOrder
+            var msg = new DepositResponse
             {
-                Amount = decimal.Parse(request.Amount),
-                Callback = $"{_options.CallbackBaseUrl}/deposit/callback",
-                Currency = settings.Currency,
-                MerchantId = settings.MerchantId,
-                TransactionId = GuidHelper.GuidToString(settings.TransactionId),
-                Response = "https://google.com", // settings.ResponseUrl,
-                PaymentMethod = settings.PaymentMethod ?? "offline"
+                Result = _primePaySerializer.Serialize(applyInfo)
             };
 
-            var depositResponse = await _primePayClient
-                .DepositAsync(settings.Key, settings.IV, order)
-                .ConfigureAwait(false);
-
-            if (depositResponse != null)
-            {
-                var applyInfo = new PrimePayDepositApplyInfo(settings, depositResponse);
-
-                var msg = new DepositResponse
-                {
-                    Result = _primePaySerializer.Serialize(applyInfo)
-                };
-
-                return msg.ToByteArray();
-            }
-            else
-            {
-                var response = new PrimePayDepositFailResponse
-                {
-                    Status = "fail",
-                    Errors = "response is null"
-                };
-
-                var applyInfo = new PrimePayDepositApplyInfo(settings, response);
-
-                var msg = new DepositResponse
-                {
-                    Result = _primePaySerializer.Serialize(applyInfo)
-                };
-
-                return msg.ToByteArray();
-            }
+            return msg.ToByteArray();
         }
-
-        public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+        else
         {
-            var request = DepositRequest.Parser.ParseFrom(data);
-            var settings = _primePaySerializer.Deserialize<PrimePayDepositSettings>(request.ApplyInfo)!;
-
             var response = new PrimePayDepositFailResponse
             {
                 Status = "fail",
-                Errors = exception.ToString()
+                Errors = "response is null"
             };
 
             var applyInfo = new PrimePayDepositApplyInfo(settings, response);
@@ -89,7 +64,28 @@ namespace Tgs.Payment.PrimePay.MessageQueue
                 Result = _primePaySerializer.Serialize(applyInfo)
             };
 
-            return ValueTask.FromResult(msg.ToByteArray());
+            return msg.ToByteArray();
         }
+    }
+
+    public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+    {
+        var request = DepositRequest.Parser.ParseFrom(data);
+        var settings = _primePaySerializer.Deserialize<PrimePayDepositSettings>(request.ApplyInfo)!;
+
+        var response = new PrimePayDepositFailResponse
+        {
+            Status = "fail",
+            Errors = exception.ToString()
+        };
+
+        var applyInfo = new PrimePayDepositApplyInfo(settings, response);
+
+        var msg = new DepositResponse
+        {
+            Result = _primePaySerializer.Serialize(applyInfo)
+        };
+
+        return ValueTask.FromResult(msg.ToByteArray());
     }
 }

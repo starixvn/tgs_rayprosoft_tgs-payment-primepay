@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.ConfigureAppConfiguration(builder =>
 {
-    builder.AddJsonFile("/config/appsettings.json", true);
+    _ = builder.AddJsonFile("/config/appsettings.json", true);
 });
 
 builder.Logging.AddTgsLog();
@@ -24,7 +24,7 @@ builder.Services.AddOpenTelemetryTracing(tracing =>
         .AddHttpClientInstrumentation()
         .AddProfileViewExporter(builder =>
         {
-            builder
+            _ = builder
                 .AddFilter(new FileExtensionFilter("html", "ico", "png", "jpg"))
                 .AddFilter(new UrlPathFilter("/swagger"))
                 .AddFilter(new UrlPathFilter("/health"));

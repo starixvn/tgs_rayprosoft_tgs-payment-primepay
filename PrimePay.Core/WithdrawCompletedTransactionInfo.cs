@@ -1,20 +1,19 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Tgs.Payment.PrimePay
+namespace Tgs.Payment.PrimePay;
+
+internal class WithdrawCompletedTransactionInfo : TransactionInfo
 {
-    internal class WithdrawCompletedTransactionInfo : TransactionInfo
-    {
-        public AdjustmentInfo? Adjustment { get; init; }
+    public AdjustmentInfo? Adjustment { get; init; }
 
-        public string BankTransactionId { get; init; } = default!;
+    public string BankTransactionId { get; init; } = default!;
 
-        [JsonPropertyName("fromBankAcctName")]
-        public string FromBankAccountName { get; init; } = default!;
+    [JsonPropertyName("fromBankAcctName")]
+    public string FromBankAccountName { get; init; } = default!;
 
-        public decimal ServiceFee { get; init; } = default!;
+    public decimal ServiceFee { get; init; } = default!;
 
-        public decimal TransactionAmount { get; init; } = default!;
+    public decimal TransactionAmount { get; init; } = default!;
 
-        public decimal TransactionFee { get; init; }
-    }
+    public decimal TransactionFee { get; init; }
 }
