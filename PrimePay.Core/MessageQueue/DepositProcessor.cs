@@ -38,34 +38,17 @@ internal class DepositProcessor : IMessageProcessor, IMessageExceptionProcessor
             .DepositAsync(settings.Key, settings.IV, order)
             .ConfigureAwait(false);
 
-        if (depositResponse != null)
+        if (depositResponse is null)
+            throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "Response is null.");
+
+        var applyInfo = new PrimePayDepositApplyInfo(settings, depositResponse);
+
+        var msg = new DepositResponse
         {
-            var applyInfo = new PrimePayDepositApplyInfo(settings, depositResponse);
+            Result = _primePaySerializer.Serialize(applyInfo)
+        };
 
-            var msg = new DepositResponse
-            {
-                Result = _primePaySerializer.Serialize(applyInfo)
-            };
-
-            return msg.ToByteArray();
-        }
-        else
-        {
-            var response = new PrimePayDepositFailResponse
-            {
-                Status = "fail",
-                Errors = "response is null"
-            };
-
-            var applyInfo = new PrimePayDepositApplyInfo(settings, response);
-
-            var msg = new DepositResponse
-            {
-                Result = _primePaySerializer.Serialize(applyInfo)
-            };
-
-            return msg.ToByteArray();
-        }
+        return msg.ToByteArray();
     }
 
     public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)

@@ -47,39 +47,22 @@ internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
             .WithdrawAsync(settings.Key, settings.IV, order)
             .ConfigureAwait(false);
 
-        if (withdrawResponse != null)
+        if (withdrawResponse is null)
+            throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "Response is null.");
+
+        var applyInfo = new PrimePayWithdrawApplyInfo(settings, withdrawResponse);
+
+        var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
+        await _paymentClient
+            .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
+            .ConfigureAwait(false);
+
+        var msg = new WithdrawResponse
         {
-            var applyInfo = new PrimePayWithdrawApplyInfo(settings, withdrawResponse);
+            Result = _primePaySerializer.Serialize(applyInfo)
+        };
 
-            var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
-            await _paymentClient
-                .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
-                .ConfigureAwait(false);
-
-            var msg = new WithdrawResponse
-            {
-                Result = _primePaySerializer.Serialize(applyInfo)
-            };
-
-            return msg.ToByteArray();
-        }
-        else
-        {
-            var response = new PrimePayWithdrawFailResponse
-            {
-                Status = "fail",
-                Errors = "response is null"
-            };
-
-            var applyInfo = new PrimePayWithdrawApplyInfo(settings, response);
-
-            var msg = new WithdrawResponse
-            {
-                Result = _primePaySerializer.Serialize(applyInfo)
-            };
-
-            return msg.ToByteArray();
-        }
+        return msg.ToByteArray();
     }
 
     public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)

@@ -1,6 +1,9 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Stateless;
+using Tgs.Payment.Clients;
+using Tgs.Payment.PrimePay.ApplicationServices;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
 using Tgs.ServiceUtility;
@@ -21,6 +24,8 @@ public class WithdrawController : ControllerBase
         [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo?> getDepositFormService,
         [FromServices] ICommandService<SaveWithdrawReturnCommand> saveReturnService,
         [FromServices] PrimePayCryptography cryptography,
+        [FromServices] IGetService<GetWithdrawStateMachineQuery, StateMachine<PaymentFlowState, PaymentTrigger>> getStateMachineService,
+        [FromServices] IPaymentClient paymentClient,
         [FromBody] CallbackViewModel request)
     {
         var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
@@ -43,29 +48,50 @@ public class WithdrawController : ControllerBase
             withdrawForm.ApplyInfo!.Settings.IV,
             request.Message)!;
 
-        if (callbackMessage.Status == TransactionStatus.Completed)
-        {
-            var formStatus = withdrawForm.Status;
-            if (withdrawForm.Status == Clients.PaymentFlowState.Approved)
-                formStatus = Clients.PaymentFlowState.Paid;
+        var fsm = await getStateMachineService
+            .GetAsync(new GetWithdrawStateMachineQuery(withdrawForm.Status))
+            .ConfigureAwait(false);
 
-            await saveReturnService
-                .ExecuteAsync(new SaveWithdrawReturnCommand(
-                    withdrawForm.Id,
-                    formStatus,
-                    callbackMessage,
-                    ((PrimePayWithdrawCompletedReturn)callbackMessage).TransactionAmount))
-                .ConfigureAwait(false);
-        }
-        else
+        switch (callbackMessage.Status)
         {
-            await saveReturnService
-                .ExecuteAsync(new SaveWithdrawReturnCommand(
-                    withdrawForm.Id,
-                    withdrawForm.Status,
-                    callbackMessage,
-                    null))
-                .ConfigureAwait(false);
+            case TransactionStatus.Completed:
+
+                if (fsm.CanFire(PaymentTrigger.PaymentWithdrawCompleted))
+                    await fsm.FireAsync(PaymentTrigger.PaymentWithdrawCompleted).ConfigureAwait(false);
+
+                await saveReturnService
+                    .ExecuteAsync(new SaveWithdrawReturnCommand(
+                        withdrawForm.Id,
+                        fsm.State,
+                        callbackMessage,
+                        ((PrimePayWithdrawCompletedReturn)callbackMessage).TransactionAmount))
+                    .ConfigureAwait(false);
+                break;
+
+            case TransactionStatus.Rejected:
+                await saveReturnService
+                    .ExecuteAsync(new SaveWithdrawReturnCommand(
+                        withdrawForm.Id,
+                        fsm.State,
+                        callbackMessage,
+                        null))
+                    .ConfigureAwait(false);
+
+                if (fsm.CanFire(PaymentTrigger.Reject))
+                    await paymentClient
+                        .RejectWithdrawAsync(withdrawForm.Id, withdrawForm.BrandId)
+                        .ConfigureAwait(false);
+                break;
+
+            default:
+                await saveReturnService
+                    .ExecuteAsync(new SaveWithdrawReturnCommand(
+                        withdrawForm.Id,
+                        fsm.State,
+                        callbackMessage,
+                        null))
+                    .ConfigureAwait(false);
+                break;
         }
 
         _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
