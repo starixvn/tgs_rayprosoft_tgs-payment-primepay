@@ -1,109 +1,88 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Google.Protobuf;
+﻿using Google.Protobuf;
 using Microsoft.Extensions.Options;
 using Tgs.MessageQueue;
 using Tgs.Payment.Clients;
 using Tgs.Payment.Protos;
 
-namespace Tgs.Payment.PrimePay.MessageQueue
+namespace Tgs.Payment.PrimePay.MessageQueue;
+
+internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
 {
-    internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
+    private readonly PrimePayOptions _options;
+    private readonly PrimePayClient _primePayClient;
+    private readonly IPaymentClient _paymentClient;
+    private readonly PrimePaySerializer _primePaySerializer;
+
+    public WithdrawProcessor(
+        PrimePaySerializer primePaySerializer,
+        IOptions<PrimePayOptions> optionsAccessor,
+        PrimePayClient primePayClient,
+        IPaymentClient paymentClient)
     {
-        private readonly PrimePayOptions _options;
-        private readonly PrimePayClient _primePayClient;
-        private readonly IPaymentClient _paymentClient;
-        private readonly PrimePaySerializer _primePaySerializer;
+        _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
+        _primePayClient = primePayClient ?? throw new ArgumentNullException(nameof(primePayClient));
+        _paymentClient = paymentClient ?? throw new ArgumentNullException(nameof(paymentClient));
+        _options = optionsAccessor.Value;
+    }
 
-        public WithdrawProcessor(
-            PrimePaySerializer primePaySerializer,
-            IOptions<PrimePayOptions> optionsAccessor,
-            PrimePayClient primePayClient,
-            IPaymentClient paymentClient)
+    public async ValueTask<byte[]> HandleAsync(byte[] data, CancellationToken cancellationToken = default)
+    {
+        var request = WithdrawRequest.Parser.ParseFrom(data);
+        var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
+
+        var order = new WithdrawOrder
         {
-            _primePaySerializer = primePaySerializer ?? throw new ArgumentNullException(nameof(primePaySerializer));
-            _primePayClient = primePayClient ?? throw new ArgumentNullException(nameof(primePayClient));
-            _paymentClient = paymentClient ?? throw new ArgumentNullException(nameof(paymentClient));
-            _options = optionsAccessor.Value;
-        }
+            Amount = decimal.Parse(request.Amount),
+            BankAccount = settings.BankAccount,
+            BankAccountName = settings.BankAccountName,
+            BankBranch = settings.BankBranch,
+            BankName = settings.BankName,
+            Currency = settings.Currency,
+            MerchantId = settings.MerchantId,
+            Callback = $"{_options.CallbackBaseUrl}/withdraw/callback",
+            TransactionId = GuidHelper.GuidToString(settings.TransactionId)
+        };
 
-        public async ValueTask<byte[]> HandleAsync(byte[] data, CancellationToken cancellationToken = default)
+        var withdrawResponse = await _primePayClient
+            .WithdrawAsync(settings.Key, settings.IV, order)
+            .ConfigureAwait(false);
+
+        if (withdrawResponse is null)
+            throw new ApiException(System.Net.HttpStatusCode.InternalServerError, "Response is null.");
+
+        var applyInfo = new PrimePayWithdrawApplyInfo(settings, withdrawResponse);
+
+        var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
+        await _paymentClient
+            .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
+            .ConfigureAwait(false);
+
+        var msg = new WithdrawResponse
         {
-            var request = WithdrawRequest.Parser.ParseFrom(data);
-            var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
+            Result = _primePaySerializer.Serialize(applyInfo)
+        };
 
-            var order = new WithdrawOrder
-            {
-                Amount = decimal.Parse(request.Amount),
-                BankAccount = settings.BankAccount,
-                BankAccountName = settings.BankAccountName,
-                BankBranch = settings.BankBranch,
-                BankName = settings.BankName,
-                Currency = settings.Currency,
-                MerchantId = settings.MerchantId,
-                Callback = $"{_options.CallbackBaseUrl}/withdraw/callback",
-                TransactionId = GuidHelper.GuidToString(settings.TransactionId)
-            };
+        return msg.ToByteArray();
+    }
 
-            var withdrawResponse = await _primePayClient
-                .WithdrawAsync(settings.Key, settings.IV, order)
-                .ConfigureAwait(false);
+    public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+    {
+        var request = WithdrawRequest.Parser.ParseFrom(data);
+        var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
 
-            if (withdrawResponse != null)
-            {
-                var applyInfo = new PrimePayWithdrawApplyInfo(settings, withdrawResponse);
-
-                var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
-                await _paymentClient
-                    .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
-                    .ConfigureAwait(false);
-
-                var msg = new WithdrawResponse
-                {
-                    Result = _primePaySerializer.Serialize(applyInfo)
-                };
-
-                return msg.ToByteArray();
-            }
-            else
-            {
-                var response = new PrimePayWithdrawFailResponse
-                {
-                    Status = "fail",
-                    Errors = "response is null"
-                };
-
-                var applyInfo = new PrimePayWithdrawApplyInfo(settings, response);
-
-                var msg = new WithdrawResponse
-                {
-                    Result = _primePaySerializer.Serialize(applyInfo)
-                };
-
-                return msg.ToByteArray();
-            }
-        }
-
-        public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+        var response = new PrimePayWithdrawFailResponse
         {
-            var request = WithdrawRequest.Parser.ParseFrom(data);
-            var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
+            Status = "fail",
+            Errors = exception.ToString()
+        };
 
-            var response = new PrimePayWithdrawFailResponse
-            {
-                Status = "fail",
-                Errors = exception.ToString()
-            };
+        var applyInfo = new PrimePayWithdrawApplyInfo(settings, response);
 
-            var applyInfo = new PrimePayWithdrawApplyInfo(settings, response);
+        var msg = new WithdrawResponse
+        {
+            Result = _primePaySerializer.Serialize(applyInfo)
+        };
 
-            var msg = new WithdrawResponse
-            {
-                Result = _primePaySerializer.Serialize(applyInfo)
-            };
-
-            return ValueTask.FromResult(msg.ToByteArray());
-        }
+        return ValueTask.FromResult(msg.ToByteArray());
     }
 }

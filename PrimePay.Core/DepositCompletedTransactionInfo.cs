@@ -1,13 +1,12 @@
-﻿namespace Tgs.Payment.PrimePay
+﻿namespace Tgs.Payment.PrimePay;
+
+internal class DepositCompletedTransactionInfo : TransactionInfo
 {
-    internal class DepositCompletedTransactionInfo : TransactionInfo
-    {
-        public string? Adjustment { get; init; }
+    public string? Adjustment { get; init; }
 
-        public BankInfo DesignatedBank { get; init; } = default!;
+    public BankInfo DesignatedBank { get; init; } = default!;
 
-        public decimal ServiceFee { get; init; } = default!;
+    public decimal ServiceFee { get; init; } = default!;
 
-        public decimal TransactionAmount { get; init; } = default!;
-    }
+    public decimal TransactionAmount { get; init; } = default!;
 }

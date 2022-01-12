@@ -1,15 +1,12 @@
-﻿using System;
+﻿namespace Tgs.Payment.PrimePay;
 
-namespace Tgs.Payment.PrimePay
+public class AdjustmentInfo
 {
-    public class AdjustmentInfo
-    {
-        public DateTimeOffset AdjustedDate { get; init; }
+    public DateTimeOffset AdjustedDate { get; init; }
 
-        public string AdjustedReason { get; init; } = default!;
+    public string AdjustedReason { get; init; } = default!;
 
-        public decimal? ServiceFeeBeforeAdjusted { get; init; }
+    public decimal? ServiceFeeBeforeAdjusted { get; init; }
 
-        public decimal? TransactionFeeBeforeAdjusted { get; init; }
-    }
+    public decimal? TransactionFeeBeforeAdjusted { get; init; }
 }

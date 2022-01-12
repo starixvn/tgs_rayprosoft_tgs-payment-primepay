@@ -1,14 +1,13 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Tgs.Payment.PrimePay
+namespace Tgs.Payment.PrimePay;
+
+public class PrimePayTransferringDepositReturn : PrimePayReturn
 {
-    public class PrimePayTransferringDepositReturn : PrimePayReturn
-    {
-        [JsonPropertyName("fromBankAcctName")]
-        public string FromBankAccountName { get; init; } = default!;
+    [JsonPropertyName("fromBankAcctName")]
+    public string FromBankAccountName { get; init; } = default!;
 
-        public decimal ServiceFee { get; init; }
+    public decimal ServiceFee { get; init; }
 
-        public decimal TransactionAmount { get; init; }
-    }
+    public decimal TransactionAmount { get; init; }
 }

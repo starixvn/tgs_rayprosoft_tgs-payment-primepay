@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Tgs.Payment.PrimePay</RootNamespace>
     <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,9 +16,9 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Tgs.MessageQueue.Nats" Version="1.2.0" />
-    <PackageReference Include="Tgs.Payment.Client" Version="0.3.4" />
-    <PackageReference Include="Tgs.PaymentService.Client" Version="0.1.0" />
+    <PackageReference Include="Tgs.MessageQueue.Nats" Version="1.4.0" />
+    <PackageReference Include="Tgs.Payment.Client" Version="0.4.1" />
+    <PackageReference Include="Tgs.PaymentService.Client" Version="0.2.0" />
     <PackageReference Include="TGS.ServiceUtility" Version="0.1.0" />
   </ItemGroup>
 

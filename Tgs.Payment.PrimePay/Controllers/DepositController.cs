@@ -1,72 +1,65 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
 using Tgs.ServiceUtility;
 
-namespace Tgs.Payment.PrimePay.Controllers
+namespace Tgs.Payment.PrimePay.Controllers;
+
+[Route("[controller]")]
+[ApiController]
+public class DepositController : ControllerBase
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class DepositController : ControllerBase
+    private readonly ILogger<DepositController> _logger;
+
+    public DepositController(ILogger<DepositController> logger) => _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
+    [HttpPost("callback")]
+    public async Task<CallbackConfirmViewModel> DepositCallbackAsync(
+        [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
+        [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo?> getDepositFormService,
+        [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
+        [FromServices] ICommandService<ApproveDepositFormCommand> approveService,
+        [FromServices] PrimePayCryptography cryptography,
+        [FromBody] CallbackViewModel request)
     {
-        private readonly ILogger<DepositController> _logger;
+        var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
 
-        public DepositController(ILogger<DepositController> logger)
+        var depositForm = await getDepositFormService
+            .GetAsync(new GetDepositFormQuery(request.TransactionId))
+            .ConfigureAwait(false);
+
+        if (depositForm != null && depositForm.Status < PaymentFlowState.WaitApprove)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
+            var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
+                depositForm.ApplyInfo!.Settings.Key,
+                depositForm.ApplyInfo!.Settings.IV,
+                request.Message)!;
 
-        [HttpPost("callback")]
-        public async Task<CallbackConfirmViewModel> DepositCallbackAsync(
-            [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
-            [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo?> getDepositFormService,
-            [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
-            [FromServices] ICommandService<ApproveDepositFormCommand> approveService,
-            [FromServices] PrimePayCryptography cryptography,
-            [FromBody] CallbackViewModel request)
-        {
-            var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
-
-            var depositForm = await getDepositFormService
-                .GetAsync(new GetDepositFormQuery(request.TransactionId))
+            await saveReturnService
+                .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
                 .ConfigureAwait(false);
 
-            if (depositForm != null && depositForm.Status < PaymentFlowState.WaitApprove)
-            {
-                var callbackMessage = cryptography.Decrypt<PrimePayReturn>(
-                    depositForm.ApplyInfo!.Settings.Key,
-                    depositForm.ApplyInfo!.Settings.IV,
-                    request.Message)!;
+            _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
 
-                await saveReturnService
-                    .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
+            if (callbackMessage.Status == TransactionStatus.Completed)
+            {
+                var approveCommand = new ApproveDepositFormCommand(
+                    depositForm.Id,
+                    depositForm.BrandId,
+                    ((PrimePayDepositCompletedReturn)callbackMessage).TransactionAmount);
+
+                await approveService
+                    .ExecuteAsync(approveCommand)
                     .ConfigureAwait(false);
-
-                _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
-
-                if (callbackMessage.Status == TransactionStatus.Completed)
-                {
-                    var approveCommand = new ApproveDepositFormCommand(
-                        depositForm.Id,
-                        depositForm.BrandId,
-                        ((PrimePayDepositCompletedReturn)callbackMessage).TransactionAmount);
-
-                    await approveService
-                        .ExecuteAsync(approveCommand)
-                        .ConfigureAwait(false);
-                }
             }
-
-            return new CallbackConfirmViewModel
-            {
-                Status = "success"
-            };
         }
+
+        return new CallbackConfirmViewModel
+        {
+            Status = "success"
+        };
     }
 }

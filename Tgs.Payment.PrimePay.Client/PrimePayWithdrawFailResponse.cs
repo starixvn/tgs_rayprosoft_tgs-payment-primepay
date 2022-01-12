@@ -1,7 +1,6 @@
-﻿namespace Tgs.Payment.PrimePay
+﻿namespace Tgs.Payment.PrimePay;
+
+public class PrimePayWithdrawFailResponse : PrimePayWithdrawResponse
 {
-    public class PrimePayWithdrawFailResponse : PrimePayWithdrawResponse
-    {
-        public string Errors { get; init; } = default!;
-    }
+    public string Errors { get; init; } = default!;
 }

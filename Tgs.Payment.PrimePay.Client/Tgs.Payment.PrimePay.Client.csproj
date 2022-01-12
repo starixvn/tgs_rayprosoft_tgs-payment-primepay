@@ -11,6 +11,8 @@
 		<PackageTags>Raypro Payment</PackageTags>
 		<Version>0.0.6</Version>
 		<IsPackable>true</IsPackable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<LangVersion>10.0</LangVersion>
 	</PropertyGroup>
 
 </Project>
