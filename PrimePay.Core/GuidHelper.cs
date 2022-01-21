@@ -1,30 +1,26 @@
-﻿using System;
-using System.Text;
+﻿using System.Diagnostics;
 
-namespace Tgs.Payment.PrimePay
+namespace Tgs.Payment.PrimePay;
+
+internal static class GuidHelper
 {
-    internal static class GuidHelper
+    public static string GuidToString(Guid id)
     {
-        public static string GuidToString(Guid id)
-        {
-            var byteArray = id.ToByteArray();
-            var hex = new StringBuilder(byteArray.Length * 2);
+        var byteArray = id.ToByteArray();
 
-            foreach (byte b in byteArray)
-                hex.AppendFormat("{0:x2}", b);
+        var spanId = ActivityTraceId.CreateFromBytes(byteArray);
 
-            return hex.ToString();
-        }
+        return spanId.ToHexString();
+    }
 
-        public static Guid StringToGuid(string hex)
-        {
-            var numberChars = hex.Length;
-            var bytes = new byte[numberChars / 2];
+    public static Guid StringToGuid(string hex)
+    {
+        var numberChars = hex.Length;
 
-            for (int i = 0; i < numberChars; i += 2)
-                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+        Span<byte> bytes = stackalloc byte[numberChars / 2];
 
-            return new Guid(bytes);
-        }
+        ActivityTraceId.CreateFromString(hex).CopyTo(bytes);
+
+        return new Guid(bytes);
     }
 }
