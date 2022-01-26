@@ -23,7 +23,7 @@
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc8" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc8" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.0.11-beta" />
-		<PackageReference Include="Tgs.Logging" Version="0.0.12" />
+		<PackageReference Include="Tgs.Logging" Version="0.0.13" />
 	</ItemGroup>
 
 	<ItemGroup>

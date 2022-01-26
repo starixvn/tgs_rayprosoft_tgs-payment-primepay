@@ -1,18 +1,16 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 
-namespace Tgs.Payment.PrimePay
+namespace Tgs.Payment.PrimePay;
+
+public class PrimePayOptions
 {
-    public class PrimePayOptions
-    {
-        public string CallbackBaseUrl { get; set; } = default!;
+    public string CallbackBaseUrl { get; set; } = default!;
 
-        public string NatsUrl { get; set; } = default!;
+    public string NatsUrl { get; set; } = default!;
 
-        public Uri PaymentApiUrl { get; set; } = default!;
+    public Uri PaymentApiUrl { get; set; } = default!;
 
-        public JsonSerializerOptions? SystemSerializerOptions { get; set; }
+    public JsonSerializerOptions? SystemSerializerOptions { get; set; }
 
-        public Uri PaymentServiceBaseUrl { get; set; } = default!;
-    }
+    public Uri PaymentServiceBaseUrl { get; set; } = default!;
 }

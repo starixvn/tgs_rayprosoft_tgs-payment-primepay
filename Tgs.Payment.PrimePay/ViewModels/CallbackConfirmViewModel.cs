@@ -1,9 +1,8 @@
-﻿namespace Tgs.Payment.PrimePay.ViewModels
-{
-    public class CallbackConfirmViewModel
-    {
-        public string Message { get; init; } = string.Empty;
+﻿namespace Tgs.Payment.PrimePay.ViewModels;
 
-        public string Status { get; init; } = default!;
-    }
+public class CallbackConfirmViewModel
+{
+    public string Message { get; init; } = string.Empty;
+
+    public string Status { get; init; } = default!;
 }
