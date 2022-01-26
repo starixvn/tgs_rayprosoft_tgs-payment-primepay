@@ -10,7 +10,8 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
-namaespace: dev
+imagePullSecrets:
+  - name: secret-tgs-harbor
 
 nameOverride: "payment-primepay"
 fullnameOverride: "payment-primepay"
@@ -20,14 +21,9 @@ connectionStrings:
   tgs: Server=localhost;Database=tgs;User Id=tgs;Password=1qaz2wsx!@
 
 nats: nats://localhost:4222
-
 paymentApiUrl: https://api.leepay-wallet.com
 callbackBaseUrl: https://dev.payment.tgsdev.gq/primepay
-
 simulation: true
-
-imagePullSecrets:
-  - name: secret-tgs-harbor
 
 podAnnotations: {}
 
@@ -63,7 +59,7 @@ autoscaling:
   minReplicas: 1
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
 
 
 nodeSelector: {}
