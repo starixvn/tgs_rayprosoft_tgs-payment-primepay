@@ -32,13 +32,19 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PrimePay__IsSimulation
+              value: "{{ .Values.simulation }}"
+            - name: OTEL_SERVICE_NAME
+              value: Payment-Primepay({{ .Release.Namespace }})
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
-          env:
-            - name: PrimePay__IsSimulation
-              value: "{{ .Values.simulation }}"
           volumeMounts:
             - mountPath: /config/appsettings.json
               name: appsettings
@@ -46,12 +52,15 @@ spec:
               subPath: appsettings.json
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
-          readinessProbe:
+            periodSeconds: 5
+          startupProbe:
             httpGet:
-              path: /
+              path: /healthz
               port: http
+            periodSeconds: 2
+            failureThreshold: 30
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
