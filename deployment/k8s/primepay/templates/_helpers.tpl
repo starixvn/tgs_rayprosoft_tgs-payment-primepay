@@ -35,6 +35,7 @@ Common labels
 */}}
 {{- define "primepay.labels" -}}
 {{ include "primepay.selectorLabels" . }}
+tgs.kind: payment
 {{- end }}
 
 {{/*
