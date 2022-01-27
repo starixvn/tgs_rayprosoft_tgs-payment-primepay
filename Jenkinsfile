@@ -127,6 +127,7 @@ pipeline {
                                 --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
                                 --set nats="$tgs_nats" \
                                 --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay" \
+                                -f - \
                             | kubectl -n ${kube_ns} apply -f -
                             {
                                 "nodeSelector": $node_selector,
