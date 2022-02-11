@@ -1,3 +1,4 @@
+@Library('global-shared-library') _
 def message = "";
 
 pipeline {
@@ -18,14 +19,20 @@ pipeline {
                         case ['origin/main','main']:
                             env.kube_ns = "prod";
                             env.k8s_config = 'stag-k8s-config';
+                            env.node_selector = '{ "dedicated": "prod" }';
+                            env.dedicated = '{"effect":"NoSchedule","key": "dedicated", "operator": "Equal", "value": "prod"}';
                             break;
                         case ['origin/release','release']:
                             env.kube_ns = "staging";
                             env.k8s_config = 'stag-k8s-config';
+                            env.node_selector = '{ "dedicated": "nonprod" }';
+                            env.dedicated = '{"effect":"NoSchedule","key": "dedicated", "operator": "Equal", "value": "noprod"}';
                             break;
                         default:
                             env.kube_ns = "dev";
-                            env.k8s_config = 'k8s-kube-config' 
+                            env.k8s_config = 'k8s-kube-config';
+                            env.node_selector = '{}';
+                            env.dedicated = '';
                             break;
                     }
                 }
@@ -97,29 +104,45 @@ pipeline {
 
 		stage('Deploy to k8s') {
 			steps {
-				withKubeConfig([credentialsId: env.k8s_config]) {
-                    withCredentials([string(credentialsId: "tgs-${kube_ns}-connectionstring", variable: "conn")]) {
-                        sh '''
-                            helm template deployment/k8s/primepay \
-                                --set image.tag=${TAG} \
-                                --set namespace=${kube_ns} \
-                                --set connectionStrings.tgs="${conn}" \
-                                --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
-                                --set nats="$tgs_nats" \
-                                --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay"
-                        '''
-                        sh '''
-                            helm template deployment/k8s/primepay \
-                                --set image.tag=${TAG} \
-                                --set namespace=${kube_ns} \
-                                --set connectionStrings.tgs="${conn}" \
-                                --set paymentApiUrl="$tgs_paymentApiUrl_primepay" \
-                                --set nats="$tgs_nats" \
-                                --set callbackBaseUrl="$tgs_paymentCallbackBaseUrl_primepay" \
-                            | kubectl -n ${kube_ns} apply -f -
-                        '''
+                script {
+                    withKubeConfig([credentialsId: env.k8s_config]) {
+
+                        def resources = getResources(env.k8s_config, env.kube_ns, "payment-primepay")
+                        println resources
+
+                        withCredentials([string(credentialsId: "tgs-${kube_ns}-connectionstring", variable: "conn")]) {
+                            sh """
+                                cat << EOF | yq e -P | helm template deployment/k8s/primepay \
+                                    -n ${kube_ns} \
+                                    --set image.tag=${TAG} \
+                                    --set paymentApiUrl=$tgs_paymentApiUrl_primepay \
+                                    --set nats=$tgs_nats \
+                                    --set callbackBaseUrl=$tgs_paymentCallbackBaseUrl_primepay \
+                                    -f -
+                                {
+                                    "nodeSelector": $node_selector,
+                                    "tolerations": [$dedicated],
+                                    "resources": $resources
+                                }
+                            """
+                            sh """
+                                cat << EOF | yq e -P | helm template deployment/k8s/primepay \
+                                    -n ${kube_ns} \
+                                    --set image.tag=${TAG} \
+                                    --set paymentApiUrl=$tgs_paymentApiUrl_primepay \
+                                    --set nats=$tgs_nats \
+                                    --set callbackBaseUrl=$tgs_paymentCallbackBaseUrl_primepay \
+                                    -f - \
+                                | kubectl -n ${kube_ns} apply -f -
+                                {
+                                    "nodeSelector": $node_selector,
+                                    "tolerations": [$dedicated],
+                                    "resources": $resources
+                                }
+                            """
+                        }
                     }
-				}
+                }
 			}
 		}
 
@@ -149,18 +172,4 @@ pipeline {
 			step([$class: 'MSTestPublisher', testResultsFile:"**/*.trx", failOnError: false, keepLongStdio: true])
 		}
 	}
-}
-
-def sendTelegram(message) {
-    def encodedMessage = URLEncoder.encode(message, "UTF-8")
-
-    withCredentials([string(credentialsId: "telegramToken", variable: "TOKEN"), string(credentialsId: "telegramChatId", variable: "CHAT_ID")]) {
-
-        response = httpRequest (consoleLogResponseBody: true,
-                contentType: 'APPLICATION_JSON',
-                httpMode: 'GET',
-                url: "https://api.telegram.org/bot${TOKEN}/sendMessage?text=${encodedMessage}&chat_id=${CHAT_ID}",
-                validResponseCodes: '200')
-        return response
-    }
 }
