@@ -3,7 +3,6 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "primepay.fullname" . }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "primepay.labels" . | nindent 4 }}
 spec:

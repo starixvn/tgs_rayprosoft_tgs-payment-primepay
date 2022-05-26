@@ -25,9 +25,9 @@ internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
         _options = optionsAccessor.Value;
     }
 
-    public async ValueTask<byte[]> HandleAsync(byte[] data, CancellationToken cancellationToken = default)
+    public async ValueTask<ReadOnlyMemory<byte>> HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
     {
-        var request = WithdrawRequest.Parser.ParseFrom(data);
+        var request = WithdrawRequest.Parser.ParseFrom(data.Span);
         var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
 
         var order = new WithdrawOrder
@@ -65,9 +65,9 @@ internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
         return msg.ToByteArray();
     }
 
-    public ValueTask<byte[]> HandleExceptionAsync(byte[] data, Exception exception, CancellationToken cancellationToken = default)
+    public ValueTask<ReadOnlyMemory<byte>> HandleExceptionAsync(ReadOnlyMemory<byte> data, Exception exception, CancellationToken cancellationToken = default)
     {
-        var request = WithdrawRequest.Parser.ParseFrom(data);
+        var request = WithdrawRequest.Parser.ParseFrom(data.Span);
         var settings = _primePaySerializer.Deserialize<PrimePayWithdrawSettings>(request.ApplyInfo)!;
 
         var response = new PrimePayWithdrawFailResponse
@@ -83,6 +83,6 @@ internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
             Result = _primePaySerializer.Serialize(applyInfo)
         };
 
-        return ValueTask.FromResult(msg.ToByteArray());
+        return ValueTask.FromResult<ReadOnlyMemory<byte>>(msg.ToByteArray());
     }
 }
