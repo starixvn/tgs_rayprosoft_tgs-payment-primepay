@@ -6,7 +6,10 @@ using Tgs.Payment.PrimePay;
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
-        _ = services.AddNatsMessageQueue(config => { });
+        _ = services
+            .AddMessageQueue()
+            .AddNatsMessageQueue(config => { })
+            .AddNatsGlobPatternExchange("*");
         _ = services.AddPaymentClient();
         _ = services.AddSingleton<PrimePaySerializer>();
     });
