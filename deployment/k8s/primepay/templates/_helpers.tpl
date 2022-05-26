@@ -34,15 +34,22 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "primepay.labels" -}}
+helm.sh/chart: {{ include "primepay.chart" . }}
 {{ include "primepay.selectorLabels" . }}
-tgs.kind: payment
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "primepay.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "primepay.name" . }}
 app: {{ include "primepay.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+tgs.kind: payment
 {{- end }}
 
 {{/*

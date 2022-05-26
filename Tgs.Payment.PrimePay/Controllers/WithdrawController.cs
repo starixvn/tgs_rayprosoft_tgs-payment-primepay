@@ -62,9 +62,15 @@ public class WithdrawController : ControllerBase
                 await saveReturnService
                     .ExecuteAsync(new SaveWithdrawReturnCommand(
                         withdrawForm.Id,
-                        fsm.State,
                         callbackMessage,
                         ((PrimePayWithdrawCompletedReturn)callbackMessage).TransactionAmount))
+                    .ConfigureAwait(false);
+
+                await paymentClient
+                    .PaidWithdrawAsync(
+                        withdrawForm.Id,
+                        withdrawForm.BrandId,
+                        HttpContext.RequestAborted)
                     .ConfigureAwait(false);
                 break;
 
@@ -72,7 +78,6 @@ public class WithdrawController : ControllerBase
                 await saveReturnService
                     .ExecuteAsync(new SaveWithdrawReturnCommand(
                         withdrawForm.Id,
-                        fsm.State,
                         callbackMessage,
                         null))
                     .ConfigureAwait(false);
@@ -87,7 +92,6 @@ public class WithdrawController : ControllerBase
                 await saveReturnService
                     .ExecuteAsync(new SaveWithdrawReturnCommand(
                         withdrawForm.Id,
-                        fsm.State,
                         callbackMessage,
                         null))
                     .ConfigureAwait(false);

@@ -2,14 +2,24 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: configmap-{{ include "primepay.fullname" . }}
-  namespace: {{ .Release.Namespace }}
 data:
   appsettings.json: |
     {
       "PrimePay": {
-        "PaymentApiUrl": "{{ .Values.paymentApiUrl  }}",
-        "NatsUrl": "{{ .Values.nats }}",
-        "CallbackBaseUrl": "{{ .Values.callbackBaseUrl }}",
-        "PaymentServiceBaseUrl": "{{ .Values.paymentServiceBaseUrl  }}"
+        "PaymentServiceBaseUrl": "http://payment-api"
+      }
+    }
+  monitor.settings.json: |
+    {
+      "Logging":{
+        "Console": {
+          "FormatterName": "json"
+        },
+        "LogLevel": {
+          "Default": "Warning",
+          "Microsoft": "Warning",
+          "Microsoft.Diagnostics": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
       }
     }

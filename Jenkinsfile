@@ -82,7 +82,7 @@ pipeline {
 
 		stage('Push Docker Image') {
 			steps {
-				sh 'sudo docker push $ImageName:${TAG}'
+				sh 'docker push $ImageName:${TAG}'
 			}
 		}
 
@@ -108,16 +108,19 @@ pipeline {
                     withKubeConfig([credentialsId: env.k8s_config]) {
 
                         def resources = getResources(env.k8s_config, env.kube_ns, "payment-primepay")
+                        def dedicated = getTgsSettings(env.k8s_config, env.kube_ns, "dedicated")
+                        def node_selector = getTgsSettings(env.k8s_config, env.kube_ns, "node-selector")
+
                         println resources
+                        println dedicated
+                        println node_selector
 
                         withCredentials([string(credentialsId: "tgs-${kube_ns}-connectionstring", variable: "conn")]) {
                             sh """
                                 cat << EOF | yq e -P | helm template deployment/k8s/primepay \
                                     -n ${kube_ns} \
+                                    --name-template tgs \
                                     --set image.tag=${TAG} \
-                                    --set paymentApiUrl=$tgs_paymentApiUrl_primepay \
-                                    --set nats=$tgs_nats \
-                                    --set callbackBaseUrl=$tgs_paymentCallbackBaseUrl_primepay \
                                     -f -
                                 {
                                     "nodeSelector": $node_selector,
@@ -128,10 +131,8 @@ pipeline {
                             sh """
                                 cat << EOF | yq e -P | helm template deployment/k8s/primepay \
                                     -n ${kube_ns} \
+                                    --name-template tgs \
                                     --set image.tag=${TAG} \
-                                    --set paymentApiUrl=$tgs_paymentApiUrl_primepay \
-                                    --set nats=$tgs_nats \
-                                    --set callbackBaseUrl=$tgs_paymentCallbackBaseUrl_primepay \
                                     -f - \
                                 | kubectl -n ${kube_ns} apply -f -
                                 {
