@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "primepay.fullname" . }}
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "primepay.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "primepay.selectorLabels" . | nindent 6 }}
@@ -18,14 +19,14 @@ spec:
       {{- end }}
       labels:
         {{- include "primepay.selectorLabels" . | nindent 8 }}
-        tgs.kind: payment
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      serviceAccountName: {{ include "primepay.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}      
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -39,6 +40,21 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+            - name: PrimePay__NatsUrl
+              valueFrom:
+                secretKeyRef:
+                  name: tgs-connections
+                  key: nats
+            - name: PrimePay__PaymentApiUrl
+              secretKeyRef:
+                  name: tgs-connections
+                  key: payment-primepay-paymentApiUrl
+            - name: PrimePay__CallbackBaseUrl
+              secretKeyRef:
+                  name: tgs-connections
+                  key: payment-primepay-callback
+            - name: DOTNET_DiagnosticPorts
+              value: /diag/port
           ports:
             - name: http
               containerPort: 80
@@ -48,6 +64,10 @@ spec:
               name: appsettings
               readOnly: true
               subPath: appsettings.json
+            - mountPath: /diag
+              name: diagvol
+            - mountPath: /dumps
+              name: dumpsvol
           livenessProbe:
             httpGet:
               path: /healthz
@@ -61,7 +81,56 @@ spec:
             failureThreshold: 30
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        - name: monitor
+          image: mcr.microsoft.com/dotnet/monitor:6.0.0
+          args: [ "--no-auth" ]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DOTNETMONITOR_DiagnosticPort__ConnectionMode
+              value: Listen
+            - name: DOTNETMONITOR_DiagnosticPort__EndpointName
+              value: /diag/port
+            - name: DOTNETMONITOR_Storage__DumpTempFolder
+              value: /dumps
+            - name: DOTNETMONITOR_Urls
+              value: http://+:52324
+            - name: DOTNETMONITOR_Metrics__Endpoints
+              value: http://+:52325
+            - name: XDG_CONFIG_HOME
+              value: /config
+          volumeMounts:
+            - mountPath: /diag
+              name: diagvol
+            - mountPath: /dumps
+              name: dumpsvol
+            - mountPath: /config/dotnet-monitor/settings.json
+              name: appsettings
+              readOnly: true
+              subPath: monitor.settings.json
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
       volumes:
         - name: appsettings
           configMap:
             name: configmap-{{ include "primepay.fullname" . }}
+        - name: diagvol
+          emptyDir: {}
+        - name: dumpsvol
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
