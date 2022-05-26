@@ -132,7 +132,7 @@ pipeline {
                                 cat << EOF | yq e -P | helm template deployment/k8s/primepay \
                                     -n ${kube_ns} \
                                     --name-template tgs \
-                                    --set image.tag=${TAG} \hel
+                                    --set image.tag=${TAG} \
                                     -f - \
                                 | kubectl -n ${kube_ns} apply -f -
                                 {
