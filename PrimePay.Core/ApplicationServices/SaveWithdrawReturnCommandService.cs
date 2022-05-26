@@ -19,7 +19,7 @@ internal class SaveWithdrawReturnCommandService : ICommandService<SaveWithdrawRe
     public ValueTask ExecuteAsync(SaveWithdrawReturnCommand command, CancellationToken cancellationToken = default)
         => _paymentServiceClient.SubmitWithdrawFormStatusAsync(
             command.FormId,
-            command.State,
+            null,
             _primePaySerializer.Serialize(command.WithdrawReturn),
             command.ActualAmount);
 }
