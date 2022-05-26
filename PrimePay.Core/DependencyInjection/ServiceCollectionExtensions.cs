@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
             .RegisterAllServiceUtilityTypes(Assembly.GetExecutingAssembly(), ServiceLifetime.Transient)
             .AddTransient<PrimePayCryptography>()
             .AddSingleton<PrimePaySerializer>()
+            .AddMessageQueue()
             .AddNatsMessageQueue(config =>
             {
                 _ = config
@@ -35,6 +36,8 @@ public static class ServiceCollectionExtensions
                     .AddProcessor<DepositProcessor>("tgs.payment.primepay.deposit", "tgs.payment.primepay.deposit")
                     .AddProcessor<WithdrawProcessor>("tgs.payment.primepay.withdraw", "tgs.payment.primepay.withdraw");
             })
+            .AddNatsGlobPatternExchange("*")
+            .Services
             .AddPaymentClient()
             .AddPaymentServiceClient((options, sp) =>
             {
