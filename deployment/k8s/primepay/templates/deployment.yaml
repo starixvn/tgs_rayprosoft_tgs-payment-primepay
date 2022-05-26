@@ -46,11 +46,13 @@ spec:
                   name: tgs-connections
                   key: nats
             - name: PrimePay__PaymentApiUrl
-              secretKeyRef:
+              valueFrom:
+                secretKeyRef:
                   name: tgs-connections
                   key: payment-primepay-paymentApiUrl
             - name: PrimePay__CallbackBaseUrl
-              secretKeyRef:
+              valueFrom:
+                secretKeyRef:
                   name: tgs-connections
                   key: payment-primepay-callback
             - name: DOTNET_DiagnosticPorts
