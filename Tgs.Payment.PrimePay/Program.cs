@@ -15,10 +15,8 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.ConfigureAppConfiguration(builder =>
-{
-    _ = builder.AddJsonFile("/config/appsettings.json", true);
-});
+builder.Host.ConfigureAppConfiguration(builder => builder
+    .AddJsonFile("/config/appsettings.json", true));
 
 builder.Logging
     .AddOpenTelemetry(options =>
