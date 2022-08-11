@@ -16,7 +16,7 @@ data:
           "FormatterName": "json"
         },
         "LogLevel": {
-          "Default": "Information",
+          "Default": "Warning",
           "Microsoft": "Warning",
           "Microsoft.Diagnostics": "Warning",
           "Microsoft.Hosting.Lifetime": "Information"
