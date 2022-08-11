@@ -10,7 +10,5 @@ public class PrimePayOptions
 
     public Uri PaymentApiUrl { get; set; } = default!;
 
-    public JsonSerializerOptions? SystemSerializerOptions { get; set; }
-
     public Uri PaymentServiceBaseUrl { get; set; } = default!;
 }

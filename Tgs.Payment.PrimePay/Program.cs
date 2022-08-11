@@ -2,27 +2,54 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Exporter.ProfileViewer.Filters;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Tgs.Payment.PrimePay;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.ConfigureAppConfiguration(builder =>
-{
-    _ = builder.AddJsonFile("/config/appsettings.json", true);
-});
+builder.Host.ConfigureAppConfiguration(builder => builder
+    .AddJsonFile("/config/appsettings.json", true));
 
-builder.Logging.AddTgsLog();
+builder.Logging
+    .AddOpenTelemetry(options =>
+    {
+        options.IncludeFormattedMessage = true;
+        options.ParseStateValues = true;
+        _ = options.AddFluentdForwardExporter(fluentOptions =>
+        {
+            var nodeIp = builder.Configuration.GetValue<string>("NODE_IP");
+            fluentOptions.Host = nodeIp;
+            fluentOptions.Tag = builder.Configuration.GetValue<string>("OTEL_SERVICE_NAME");
+            fluentOptions.UseMessagePack();
+        });
+    });
 
-var startup = new Startup();
+builder.Services
+    .AddPrimePay((options, sp) =>
+    {
+        var config = sp.GetRequiredService<IConfiguration>();
 
-startup.ConfigureServices(builder.Services);
+        config.GetSection("PrimePay").Bind(options);
+
+        var jsonOptions = sp.GetRequiredService<IOptions<JsonOptions>>().Value;
+    });
+
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.AddPrimePayConverters();
+    });
 
 builder.Services.AddHealthChecks();
 

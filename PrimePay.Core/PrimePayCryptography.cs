@@ -1,15 +1,31 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Tgs.Payment.PrimePay.Converters;
 
 namespace Tgs.Payment.PrimePay;
 
 public class PrimePayCryptography
 {
     private static readonly Aes _Aes;
-    private readonly JsonSerializerOptions? _jsonSerializerOptions;
+
+    private static readonly JsonSerializerOptions? _JsonSerializerOptions = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = {
+            new DecimalJsonConverter(),
+            new NullableDateTimeOffsetJsonConverter(),
+            new DateTimeOffsetJsonConverter(),
+            new TransactionInfoJsonConverter(),
+            new PrimePayReturnJsonConverter(),
+            new PrimePayDepositResponseJsonConverter(),
+            new PrimePayWithdrawResponseJsonConverter()
+        }
+    };
+
     private readonly ILogger<PrimePayCryptography> _logger;
 
     static PrimePayCryptography()
@@ -18,9 +34,8 @@ public class PrimePayCryptography
         _Aes.KeySize = 128;
     }
 
-    public PrimePayCryptography(IOptions<PrimePayOptions> optionsAccessor, ILogger<PrimePayCryptography> logger)
+    public PrimePayCryptography(ILogger<PrimePayCryptography> logger)
     {
-        _jsonSerializerOptions = optionsAccessor.Value.SystemSerializerOptions;
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -52,8 +67,8 @@ public class PrimePayCryptography
     }
 
     private TData? DeserializeObject<TData>(string json)
-        => JsonSerializer.Deserialize<TData>(json, _jsonSerializerOptions);
+        => JsonSerializer.Deserialize<TData>(json, _JsonSerializerOptions);
 
     private string SerializeObject<TData>(TData data)
-        => JsonSerializer.Serialize(data, _jsonSerializerOptions);
+        => JsonSerializer.Serialize(data, _JsonSerializerOptions);
 }

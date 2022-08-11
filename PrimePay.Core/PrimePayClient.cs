@@ -1,26 +1,39 @@
 ﻿using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Tgs.Payment.PrimePay.Converters;
 
 namespace Tgs.Payment.PrimePay;
 
 internal class PrimePayClient
 {
+    private static readonly JsonSerializerOptions? _JsonSerializerOptions = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = {
+            new DecimalJsonConverter(),
+            new NullableDateTimeOffsetJsonConverter(),
+            new DateTimeOffsetJsonConverter(),
+            new TransactionInfoJsonConverter(),
+            new PrimePayReturnJsonConverter(),
+            new PrimePayDepositResponseJsonConverter(),
+            new PrimePayWithdrawResponseJsonConverter()
+        }
+    };
+
     private readonly PrimePayCryptography _cryptography;
     private readonly HttpClient _httpClient;
-    private readonly JsonSerializerOptions? _jsonSerializerOptions;
     private readonly ILogger<PrimePayClient> _logger;
 
     public PrimePayClient(
         HttpClient httpClient,
-        IOptions<PrimePayOptions> optionsAccessor,
         PrimePayCryptography cryptography,
         ILogger<PrimePayClient> logger)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        _jsonSerializerOptions = optionsAccessor.Value.SystemSerializerOptions;
         _cryptography = cryptography ?? throw new ArgumentNullException(nameof(cryptography));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -182,8 +195,8 @@ internal class PrimePayClient
     }
 
     private TData? DeserializeObject<TData>(string json)
-        => JsonSerializer.Deserialize<TData>(json, _jsonSerializerOptions);
+        => JsonSerializer.Deserialize<TData>(json, _JsonSerializerOptions);
 
     private string SerializeObject<TData>(TData data)
-        => JsonSerializer.Serialize(data, _jsonSerializerOptions);
+        => JsonSerializer.Serialize(data, _JsonSerializerOptions);
 }

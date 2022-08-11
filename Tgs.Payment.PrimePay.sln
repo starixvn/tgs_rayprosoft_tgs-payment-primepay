@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31205.134
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32804.467
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tgs.Payment.PrimePay", "Tgs.Payment.PrimePay\Tgs.Payment.PrimePay.csproj", "{90C43B54-AA97-4D17-9872-5A57E792B232}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tgs.Payment.PrimePay.Client", "Tgs.Payment.PrimePay.Client\Tgs.Payment.PrimePay.Client.csproj", "{998B8835-2849-4A02-A9B5-79D43AB7CBE2}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PrimePayTest", "PrimePayTest\PrimePayTest.csproj", "{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tgs.Payment.PrimePay.IntegrationTests", "Tgs.Payment.PrimePay.IntegrationTests\Tgs.Payment.PrimePay.IntegrationTests.csproj", "{DDEEEE63-10B1-47A7-B466-421535255DC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C02E15C-CDBD-400C-A7BA-D1585A65CE7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDEEEE63-10B1-47A7-B466-421535255DC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDEEEE63-10B1-47A7-B466-421535255DC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDEEEE63-10B1-47A7-B466-421535255DC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDEEEE63-10B1-47A7-B466-421535255DC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
