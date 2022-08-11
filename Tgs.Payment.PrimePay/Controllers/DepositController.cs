@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Mvc;
 using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay.Services;
 using Tgs.Payment.PrimePay.ViewModels;
@@ -18,15 +16,12 @@ public class DepositController : ControllerBase
 
     [HttpPost("callback")]
     public async Task<CallbackConfirmViewModel> DepositCallbackAsync(
-        [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
         [FromServices] IGetService<GetDepositFormQuery, DepositFormInfo?> getDepositFormService,
         [FromServices] ICommandService<SaveDepositReturnCommand> saveReturnService,
         [FromServices] ICommandService<ApproveDepositFormCommand> approveService,
         [FromServices] PrimePayCryptography cryptography,
         [FromBody] CallbackViewModel request)
     {
-        var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
-
         var depositForm = await getDepositFormService
             .GetAsync(new GetDepositFormQuery(request.TransactionId))
             .ConfigureAwait(false);
@@ -42,7 +37,7 @@ public class DepositController : ControllerBase
                 .ExecuteAsync(new SaveDepositReturnCommand(depositForm.Id, callbackMessage))
                 .ConfigureAwait(false);
 
-            _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
+            _logger.LogInformation("{callbackMessage}", callbackMessage);
 
             if (callbackMessage.Status == TransactionStatus.Completed)
             {
