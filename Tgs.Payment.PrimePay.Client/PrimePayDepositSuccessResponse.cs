@@ -8,7 +8,7 @@ public class PrimePayDepositSuccessResponse : PrimePayDepositResponse
 
     public BankInfo DesignatedBank { get; init; } = default!;
 
-    public string DesignatedBankRemark { get; init; } = default!;
+    // public string DesignatedBankRemark { get; init; } = default!;
 
     [JsonPropertyName("dateExpired")]
     public DateTimeOffset ExpiredDate { get; init; }

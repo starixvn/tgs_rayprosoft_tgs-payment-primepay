@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Mvc;
 using Stateless;
 using Tgs.Payment.Clients;
 using Tgs.Payment.PrimePay.ApplicationServices;
@@ -20,17 +18,14 @@ public class WithdrawController : ControllerBase
 
     [HttpPost("callback")]
     public async Task<CallbackConfirmViewModel> WithdrawCallbackAsync(
-        [FromServices] IOptions<JsonOptions> jsonOptionsAccessor,
-        [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo?> getDepositFormService,
+        [FromServices] IGetService<GetWithdrawFormQuery, WithdrawFormInfo?> getWithdrawFormService,
         [FromServices] ICommandService<SaveWithdrawReturnCommand> saveReturnService,
         [FromServices] PrimePayCryptography cryptography,
         [FromServices] IGetService<GetWithdrawStateMachineQuery, StateMachine<PaymentFlowState, PaymentTrigger>> getStateMachineService,
         [FromServices] IPaymentClient paymentClient,
         [FromBody] CallbackViewModel request)
     {
-        var jsonSerializerOptions = jsonOptionsAccessor.Value.JsonSerializerOptions;
-
-        var withdrawForm = await getDepositFormService
+        var withdrawForm = await getWithdrawFormService
             .GetAsync(new GetWithdrawFormQuery(request.TransactionId))
             .ConfigureAwait(false);
 
@@ -98,7 +93,7 @@ public class WithdrawController : ControllerBase
                 break;
         }
 
-        _logger.LogInformation(JsonSerializer.Serialize(callbackMessage, jsonSerializerOptions));
+        _logger.LogInformation("{callbackMessage}", callbackMessage);
 
         return new CallbackConfirmViewModel
         {
