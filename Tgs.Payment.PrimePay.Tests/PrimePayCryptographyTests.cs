@@ -27,10 +27,6 @@ public class PrimePayCryptographyTests
         };
 
         var sut = new PrimePayCryptography(
-            new OptionsWrapper<PrimePayOptions>(new PrimePayOptions
-            {
-                SystemSerializerOptions = options
-            }),
             NullLogger<PrimePayCryptography>.Instance);
 
         var data = "TestData";
@@ -53,11 +49,11 @@ public class PrimePayCryptographyTests
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             Converters = {
-                    new DecimalJsonConverter(),
-                    new NullableDateTimeOffsetJsonConverter(),
-                    new DateTimeOffsetJsonConverter(),
-                    new TransactionInfoJsonConverter()
-                }
+                new DecimalJsonConverter(),
+                new NullableDateTimeOffsetJsonConverter(),
+                new DateTimeOffsetJsonConverter(),
+                new TransactionInfoJsonConverter()
+            }
         };
 
         _ = JsonSerializer.Deserialize<IEnumerable<BalanceInfo>>(json, options);
