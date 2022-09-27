@@ -1,22 +1,20 @@
-using System.Net;
-using System.Net.Sockets;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Exporter;
-using OpenTelemetry.Exporter.ProfileViewer.Filters;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Tgs.Payment.PrimePay;
+using Tgs.Payment.PrimePay.MessageQueue;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.ConfigureAppConfiguration(builder => builder
-    .AddJsonFile("/config/appsettings.json", true));
+builder.Configuration
+    .AddJsonFile("/config/appsettings.json", true)
+    .AddEnvironmentVariables();
 
 builder.Logging
     .AddOpenTelemetry(options =>
@@ -33,16 +31,6 @@ builder.Logging
     });
 
 builder.Services
-    .AddPrimePay((options, sp) =>
-    {
-        var config = sp.GetRequiredService<IConfiguration>();
-
-        config.GetSection("PrimePay").Bind(options);
-
-        var jsonOptions = sp.GetRequiredService<IOptions<JsonOptions>>().Value;
-    });
-
-builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
@@ -51,7 +39,35 @@ builder.Services
         options.JsonSerializerOptions.Converters.AddPrimePayConverters();
     });
 
-builder.Services.AddHealthChecks();
+builder.Services
+    .AddHttpClientLoggingHandler()
+    .AddPrimePay(
+        (options, _) => builder.Configuration
+            .GetSection("PrimePay")
+            .Bind(options),
+        sp => sp.ResolveLoggingHandler<IOptions<JsonOptions>>())
+    .AddMessageQueue()
+    .AddNatsMessageQueue(config =>
+        {
+            _ = config
+                .ConfigQueueOptions((options, sp) =>
+                {
+                    var primePayOptions = sp.GetRequiredService<IOptions<PrimePayOptions>>().Value;
+
+                    options.Url = primePayOptions.NatsUrl;
+                })
+                .AddProcessor(ProcessorTypes.DepositProcessorType, "tgs.payment.primepay.deposit", "tgs.payment.primepay.deposit")
+                .AddProcessor(ProcessorTypes.WithdrawProcessorType, "tgs.payment.primepay.withdraw", "tgs.payment.primepay.withdraw");
+        })
+        .AddNatsGlobPatternExchange("*");
+
+builder.Services
+    .AddHttpLogging(logging =>
+    {
+        logging.LoggingFields = HttpLoggingFields.All;
+        logging.MediaTypeOptions.AddText("application/x-www-form-urlencoded");
+        logging.MediaTypeOptions.AddText("text/html");
+    });
 
 builder.Services
     .AddOptions<OtlpExporterOptions>()
@@ -63,100 +79,47 @@ builder.Services
             options.Endpoint = new Uri($"http://{nodeIp}:4317");
 
         conifg.GetSection("Opentelemetry:Tracing").Bind(options);
-    });
-
-builder.Services.AddOpenTelemetryTracing(builder =>
-{
-    builder
+    })
+    .Services
+    .AddOpenTelemetryTracing(builder => builder
         .SetResourceBuilder(ResourceBuilder.CreateDefault()
         .AddEnvironmentVariableDetector())
-        .AddSource("Tgs.Payment.PrimePay")
+        .AddSource("Tgs.*")
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        .AddProfileViewExporter(builder =>
-        {
-            builder
-                .AddFilter(new FileExtensionFilter("html", "ico", "png", "jpg"))
-                .AddFilter(new UrlPathFilter("/swagger"))
-                .AddFilter(new UrlPathFilter("/healthz"));
-        })
-        .AddOtlpExporter();
-});
-
-builder.Services.Configure<AspNetCoreInstrumentationOptions>(options =>
-{
-    options.Filter = httpContext =>
-    {
-        return !httpContext.Request.Path.HasValue
+        .AddProfileViewExporter()
+        .AddOtlpExporter())
+    .Configure<AspNetCoreInstrumentationOptions>(options => options.Filter =
+        httpContext => !httpContext.Request.Path.HasValue
             || !httpContext.Request.Path.StartsWithSegments("/swagger")
             && !httpContext.Request.Path.StartsWithSegments("/healthz")
-            && !httpContext.Request.Path.StartsWithSegments("/profiler/")
+            && !httpContext.Request.Path.StartsWithSegments("/metrics")
             && !new[] { "html", "ico", "png", "jpg" }.Any(
-                ext => httpContext.Request.Path.Value.EndsWith($".{ext}"));
-    };
-});
+                ext => httpContext.Request.Path.Value.EndsWith($".{ext}")));
 
-builder.Services.AddProfileViewer();
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+app.UseHttpLogging();
+
 app.MapControllers();
 
-app.MapHealthChecks("/healthz",
-    new HealthCheckOptions
-    {
-        ResultStatusCodes = new Dictionary<HealthStatus, int>
-        {
-            { HealthStatus.Healthy, StatusCodes.Status200OK },
-            { HealthStatus.Unhealthy, StatusCodes.Status503ServiceUnavailable },
-            { HealthStatus.Degraded, StatusCodes.Status500InternalServerError }
-        },
-        ResponseWriter = async (
-            context,
-            report) =>
-        {
-            var hostName = Dns.GetHostName();
-            var hostEntry = await Dns.GetHostEntryAsync(hostName);
-            var hostIp = Array.Find(hostEntry.AddressList,
-                x => x.AddressFamily == AddressFamily.InterNetwork);
-            var response = new
-            {
-                Data = new
-                {
-                    Environment.MachineName,
-                    HostName = hostName,
-                    HostIp = hostIp?.ToString() ?? string.Empty,
-                    Environment = app.Environment.EnvironmentName,
-                    OsVersion = $"{Environment.OSVersion}",
-                    Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(),
-                    ProcessCount = Environment.ProcessorCount
-                },
-                Result = new
-                {
-                    Status = report.Status.ToString(),
-                    TotalDuration = report.TotalDuration.TotalSeconds,
-                    DependencyServices = report.Entries.Select(srv => new
-                    {
-                        srv.Key,
-                        Duration = srv.Value.Duration.TotalSeconds,
-                        srv.Value.Description,
-                        srv.Value.Data,
-                        Exception = srv.Value.Exception?.Message,
-                        Status = srv.Value.Status.ToString(),
-                        Tags = srv.Value.Tags.Any() ? string.Join(',', srv.Value.Tags) : string.Empty
-                    }).ToArray()
-                }
-            };
-            var json = JsonSerializer.Serialize(response,
-                new JsonSerializerOptions
-                {
-                    WriteIndented = true
-                });
-            context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(json);
-        }
-    });
+app.MapHealthChecks("/healthz");
 
-app.MapProfileViewer();
+app.Use(async (context, next) =>
+{
+    await next().ConfigureAwait(false);
+
+    var logger = context.RequestServices.GetService<ILoggerFactory>()
+        ?.CreateLogger("Microsoft.AspNetCore.HttpLogging.HttpLoggingMiddleware");
+
+    if (logger?.IsEnabled(LogLevel.Information) == true)
+    {
+        using var stream = new StreamReader(context.Request.Body);
+
+        _ = await stream.ReadToEndAsync().ConfigureAwait(false);
+    }
+});
 
 await app.RunAsync();

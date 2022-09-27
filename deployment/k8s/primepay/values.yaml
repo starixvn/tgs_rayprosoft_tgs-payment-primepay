@@ -24,7 +24,10 @@ serviceAccount:
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
-podAnnotations: {}
+podAnnotations: 
+  prometheus.io/path: /metrics
+  prometheus.io/port: "52325"
+  prometheus.io/scrape: "true"
 
 podSecurityContext: {}
   # fsGroup: 2000
@@ -57,17 +60,17 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources: 
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  limits:
-    cpu: 200m
-    memory: 400Mi
-  requests:
-    cpu: 200m
-    memory: 400Mi
+  # limits:
+  #   cpu: 200m
+  #   memory: 400Mi
+  # requests:
+  #   cpu: 200m
+  #   memory: 400Mi
 
 autoscaling:
   enabled: false
