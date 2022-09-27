@@ -17,9 +17,9 @@ build-code:
   only:
     - merge_requests
     - main
-  artifacts:
-    untracked: true
-    expire_in: "1 days"
+  cache:
+    key: Tgs.Payment.PrimePay.$CI_PIPELINE_ID
+    untracked: true    
 
 unit-test:
   stage: test
