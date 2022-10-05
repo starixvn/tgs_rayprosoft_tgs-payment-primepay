@@ -24,10 +24,7 @@ internal class TestPrimePayApplication : WebApplicationFactory<Program>
             .AddSingleton<IConfigureOptions<OtlpExporterOptions>>(
                 sp => new ConfigureNamedOptions<OtlpExporterOptions>(
                     Options.DefaultName,
-                    exporterOptions =>
-                    {
-                        exporterOptions.TimeoutMilliseconds = 0;
-                    })));
+                    exporterOptions => exporterOptions.TimeoutMilliseconds = 0)));
 
         _webHostConfigure?.Invoke(builder);
     }

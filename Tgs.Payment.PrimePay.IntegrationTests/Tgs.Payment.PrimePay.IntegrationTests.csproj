@@ -26,4 +26,12 @@
     <ProjectReference Include="..\Tgs.Payment.PrimePay\Tgs.Payment.PrimePay.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EditorConfigFiles Remove="D:\Users\Phoenix\source\repos\tgs-payment-primepay\Tgs.Payment.PrimePay.IntegrationTests\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="D:\Users\Phoenix\source\repos\tgs-payment-primepay\Tgs.Payment.PrimePay.IntegrationTests\.editorconfig" />
+  </ItemGroup>
+
 </Project>

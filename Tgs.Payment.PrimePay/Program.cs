@@ -47,19 +47,16 @@ builder.Services
             .Bind(options),
         sp => sp.ResolveLoggingHandler<IOptions<JsonOptions>>())
     .AddMessageQueue()
-    .AddNatsMessageQueue(config =>
+    .AddNatsMessageQueue(config => config
+        .ConfigQueueOptions((options, sp) =>
         {
-            _ = config
-                .ConfigQueueOptions((options, sp) =>
-                {
-                    var primePayOptions = sp.GetRequiredService<IOptions<PrimePayOptions>>().Value;
+            var primePayOptions = sp.GetRequiredService<IOptions<PrimePayOptions>>().Value;
 
-                    options.Url = primePayOptions.NatsUrl;
-                })
-                .AddProcessor(ProcessorTypes.DepositProcessorType, "tgs.payment.primepay.deposit", "tgs.payment.primepay.deposit")
-                .AddProcessor(ProcessorTypes.WithdrawProcessorType, "tgs.payment.primepay.withdraw", "tgs.payment.primepay.withdraw");
+            options.Url = primePayOptions.NatsUrl;
         })
-        .AddNatsGlobPatternExchange("*");
+        .AddProcessor(ProcessorTypes.DepositProcessorType, "tgs.payment.primepay.deposit", "tgs.payment.primepay.deposit")
+        .AddProcessor(ProcessorTypes.WithdrawProcessorType, "tgs.payment.primepay.withdraw", "tgs.payment.primepay.withdraw"))
+    .AddNatsGlobPatternExchange("*");
 
 builder.Services
     .AddHttpLogging(logging =>

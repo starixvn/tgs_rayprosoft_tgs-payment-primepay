@@ -93,7 +93,7 @@ public class WithdrawTests
             MediaTypeNames.Application.Json);
         var response = await httpClient.PostAsync("/withdraw/callback", requestContent);
 
-        response.EnsureSuccessStatusCode();
+        _ = response.EnsureSuccessStatusCode();
 
         var actual = await response.Content.ReadFromJsonAsync<CallbackConfirmViewModel>(jsonOptions.JsonSerializerOptions);
 

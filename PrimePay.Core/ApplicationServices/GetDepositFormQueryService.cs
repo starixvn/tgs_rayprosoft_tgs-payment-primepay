@@ -21,7 +21,7 @@ internal class GetDepositFormQueryService : IGetService<GetDepositFormQuery, Dep
         var depositFormId = GuidHelper.StringToGuid(query.TransactionId);
 
         var data = await _paymentServiceClient
-            .GetDepositFormAsync(depositFormId)
+            .GetDepositFormAsync(depositFormId, cancellationToken)
             .ConfigureAwait(false);
 
         return data == null

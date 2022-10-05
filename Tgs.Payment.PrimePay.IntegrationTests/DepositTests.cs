@@ -69,7 +69,7 @@ public class DepositTests
                 "http://localhost"),
             new PrimePayDepositSuccessResponse());
 
-        fakeGetDepositFormService.GetAsync(Arg.Any<GetDepositFormQuery>())
+        _ = fakeGetDepositFormService.GetAsync(Arg.Any<GetDepositFormQuery>())
             .Returns(new DepositFormInfo(
                 depositFormId,
                 "player1",
@@ -85,7 +85,7 @@ public class DepositTests
             MediaTypeNames.Application.Json);
         var response = await httpClient.PostAsync("/deposit/callback", requestContent);
 
-        response.EnsureSuccessStatusCode();
+        _ = response.EnsureSuccessStatusCode();
 
         var actual = await response.Content.ReadFromJsonAsync<CallbackConfirmViewModel>(jsonOptions.JsonSerializerOptions);
 

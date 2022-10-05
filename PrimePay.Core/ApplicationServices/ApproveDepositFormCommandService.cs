@@ -13,5 +13,6 @@ internal class ApproveDepositFormCommandService : ICommandService<ApproveDeposit
         => _paymentClient.ApproveDepositAsync(
             command.FormId,
             command.BrandId,
-            command.ActualAmount);
+            command.ActualAmount,
+            cancellationToken);
 }
