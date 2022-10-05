@@ -13,19 +13,6 @@ public class PrimePayCryptographyTests
     [Test]
     public void Data_Should_Fllow_PrimePay_Requirements_To_Encrypt()
     {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-            Converters = {
-                    new DecimalJsonConverter(),
-                    new NullableDateTimeOffsetJsonConverter(),
-                    new DateTimeOffsetJsonConverter(),
-                    new TransactionInfoJsonConverter()
-                }
-        };
-
         var sut = new PrimePayCryptography(
             NullLogger<PrimePayCryptography>.Instance);
 

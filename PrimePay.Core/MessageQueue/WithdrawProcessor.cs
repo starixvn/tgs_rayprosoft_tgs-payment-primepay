@@ -54,7 +54,7 @@ internal class WithdrawProcessor : IMessageProcessor, IMessageExceptionProcessor
 
         var thirdPartyOrderNo = ((PrimePayWithdrawSuccessResponse)applyInfo.Response).ReferenceId;
         await _paymentClient
-            .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo)
+            .SaveWithdrawFormThirdPartyOrderNoAsync(settings.TransactionId, thirdPartyOrderNo, cancellationToken)
             .ConfigureAwait(false);
 
         var msg = new WithdrawResponse
